@@ -19,10 +19,14 @@ export default class Main {
   constructor() {
     // 监听重新开始的事件
     this.gameInfo.on('restart', this.start.bind(this));
-
+  
+    // 绑定触摸事件
+    wx.onTouchStart(this.handleTouch.bind(this));
+  
     // 开始游戏
     this.start();
   }
+  
 
   /**
    * 开始或重启游戏
@@ -50,6 +54,25 @@ export default class Main {
     }
   }
 
+  // 触摸事件处理函数
+  handleTouch(event) {
+        const { clientX, clientY } = event.touches[0];
+    
+        const btnArea = GameGlobal.sudokuBoard.buttonArea;
+        if (
+        clientY >= btnArea.y &&
+        clientY <= btnArea.y + btnArea.buttonSize &&
+        clientX >= btnArea.x &&
+        clientX <= btnArea.x + 9 * btnArea.buttonSize
+        ) {
+        // 选择数字
+        const selectedNumber = Math.floor((clientX - btnArea.x) / btnArea.buttonSize) + 1;
+        GameGlobal.databus.selectedNumber = selectedNumber;
+        } else {
+        // 点击棋盘放置数字
+        GameGlobal.sudokuBoard.placeSelectedNumber(clientX, clientY);
+        }
+    }
   /**
    * 游戏逻辑更新函数
    */

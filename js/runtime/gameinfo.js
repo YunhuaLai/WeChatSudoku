@@ -44,8 +44,8 @@ export default class GameInfo extends Emitter {
    */
   renderGameStatus(ctx, score, errors) {
     this.setFont(ctx);
-    ctx.fillText(`分数: ${score}`, 10, 30);
-    ctx.fillText(`错误: ${errors}`, SCREEN_WIDTH - 100, 30);
+    ctx.fillText(`分数: ${score}`, 100, canvas.height * 0.1);  // 向下移动
+    ctx.fillText(`错误: ${errors}`, canvas.width - 100, canvas.height * 0.1);
   }
 
   /**

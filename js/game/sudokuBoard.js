@@ -149,22 +149,100 @@ export default class SudokuBoard {
      * 渲染数独棋盘
      */
     render(ctx) {
-      const cellSize = canvas.width / this.size;
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 1;
-  
-      // 绘制网格
-      for (let i = 0; i <= this.size; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * cellSize, 0);
-        ctx.lineTo(i * cellSize, canvas.height);
-        ctx.stroke();
-  
-        ctx.beginPath();
-        ctx.moveTo(0, i * cellSize);
-        ctx.lineTo(canvas.width, i * cellSize);
-        ctx.stroke();
-      }
+        const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
+        const cellSize = boardSize / this.size;
+      
+        const startX = (canvas.width - boardSize) / 2;
+        const startY = canvas.height * 0.15;
+      
+        // 绘制数独棋盘
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(startX, startY, boardSize, boardSize);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+      
+        for (let i = 0; i <= this.size; i++) {
+          ctx.beginPath();
+          ctx.moveTo(startX + i * cellSize, startY);
+          ctx.lineTo(startX + i * cellSize, startY + boardSize);
+          ctx.stroke();
+      
+          ctx.beginPath();
+          ctx.moveTo(startX, startY + i * cellSize);
+          ctx.lineTo(startX + boardSize, startY + i * cellSize);
+          ctx.stroke();
+        }
+      
+        // 绘制数字
+        ctx.font = `${cellSize / 2}px Arial`;
+        ctx.fillStyle = '#000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+      
+        for (let row = 0; row < this.size; row++) {
+          for (let col = 0; col < this.size; col++) {
+            if (this.grid[row][col] !== 0) {
+              ctx.fillText(
+                this.grid[row][col],
+                startX + col * cellSize + cellSize / 2,
+                startY + row * cellSize + cellSize / 2
+              );
+            }
+          }
+        }
+      
+        // 绘制数字选择按钮
+        this.renderNumberButtons(ctx, startX, startY + boardSize + 20, boardSize);
     }
+      
+      // 绘制1-9数字按钮
+    renderNumberButtons(ctx, x, y, width) {
+        const buttonSize = width / 9;
+        ctx.strokeStyle = '#000';
+      
+        for (let i = 1; i <= 9; i++) {
+          const btnX = x + (i - 1) * buttonSize;
+          
+          // Highlight selected number
+          if (GameGlobal.databus.selectedNumber === i) {
+            ctx.fillStyle = '#dcdcdc';
+          } else {
+            ctx.fillStyle = '#f0f0f0';
+          }
+      
+          ctx.fillRect(btnX, y, buttonSize, buttonSize);
+          ctx.strokeRect(btnX, y, buttonSize, buttonSize);
+      
+          ctx.fillStyle = '#000';
+          ctx.fillText(i, btnX + buttonSize / 2, y + buttonSize / 2);
+        }
+      }
+      
+
+    placeSelectedNumber(x, y) {
+        const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
+        const startX = (canvas.width - boardSize) / 2;
+        const startY = canvas.height * 0.15;
+        const cellSize = boardSize / this.size;
+        
+        if (x >= startX && x <= startX + boardSize && y >= startY && y <= startY + boardSize) {
+            const col = Math.floor((x - startX) / cellSize);
+            const row = Math.floor((y - startY) / cellSize);
+        
+            const selectedNumber = GameGlobal.databus.selectedNumber;
+            if (selectedNumber) {
+            if (this.canPlaceNumber(row, col, selectedNumber)) {
+                this.placeNumber(row, col, selectedNumber);
+            } else {
+                console.log("Number can't be placed here.");  // Feedback for invalid placement
+            }
+            } else {
+            console.log("Select a number first.");  // Feedback for no selection
+            }
+        }
+        }
+      
+      
+      
   }
   
