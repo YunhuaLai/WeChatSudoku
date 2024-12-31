@@ -196,20 +196,18 @@ export default class SudokuBoard {
     }
       
       // 绘制1-9数字按钮
-    renderNumberButtons(ctx, x, y, width) {
+      renderNumberButtons(ctx, x, y, width) {
         const buttonSize = width / 9;
         ctx.strokeStyle = '#000';
       
+        if (!this.buttonArea) {
+          // 初始化按钮区域，避免undefined
+          this.buttonArea = { x, y, buttonSize };
+        }
+      
         for (let i = 1; i <= 9; i++) {
           const btnX = x + (i - 1) * buttonSize;
-          
-          // Highlight selected number
-          if (GameGlobal.databus.selectedNumber === i) {
-            ctx.fillStyle = '#dcdcdc';
-          } else {
-            ctx.fillStyle = '#f0f0f0';
-          }
-      
+          ctx.fillStyle = GameGlobal.databus.selectedNumber === i ? '#dcdcdc' : '#f0f0f0';
           ctx.fillRect(btnX, y, buttonSize, buttonSize);
           ctx.strokeRect(btnX, y, buttonSize, buttonSize);
       
@@ -217,32 +215,34 @@ export default class SudokuBoard {
           ctx.fillText(i, btnX + buttonSize / 2, y + buttonSize / 2);
         }
       }
-      
 
     placeSelectedNumber(x, y) {
         const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
         const startX = (canvas.width - boardSize) / 2;
         const startY = canvas.height * 0.15;
         const cellSize = boardSize / this.size;
-        
+      
+        // 判断点击是否在棋盘内
         if (x >= startX && x <= startX + boardSize && y >= startY && y <= startY + boardSize) {
-            const col = Math.floor((x - startX) / cellSize);
-            const row = Math.floor((y - startY) / cellSize);
-        
-            const selectedNumber = GameGlobal.databus.selectedNumber;
-            if (selectedNumber) {
+          const col = Math.floor((x - startX) / cellSize);
+          const row = Math.floor((y - startY) / cellSize);
+      
+          const selectedNumber = GameGlobal.databus.selectedNumber;
+          if (selectedNumber) {
+            // 确认能否放置数字
             if (this.canPlaceNumber(row, col, selectedNumber)) {
-                this.placeNumber(row, col, selectedNumber);
+              this.placeNumber(row, col, selectedNumber);
+              console.log(`Placed ${selectedNumber} at row: ${row}, col: ${col}`);
             } else {
-                console.log("Number can't be placed here.");  // Feedback for invalid placement
+              console.log(`Cannot place ${selectedNumber} at row: ${row}, col: ${col}`);
             }
-            } else {
-            console.log("Select a number first.");  // Feedback for no selection
-            }
+          } else {
+            console.log("No number selected!");
+          }
+        } else {
+          console.log("Touched outside the board.");
         }
-        }
-      
-      
+      }
       
   }
   

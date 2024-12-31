@@ -13,7 +13,7 @@ GameGlobal.sudokuBoard = new SudokuBoard(); // 创建数独棋盘实例
  */
 export default class Main {
   aniId = 0; // 动画帧ID
-  sudokuBoard = new SudokuBoard(); // 初始化数独棋盘
+  sudokuBoard = GameGlobal.sudokuBoard // 初始化数独棋盘
   gameInfo = new GameInfo(); // 创建游戏信息UI
 
   constructor() {
@@ -32,11 +32,13 @@ export default class Main {
    * 开始或重启游戏
    */
   start() {
-    GameGlobal.databus.reset(); // 重置游戏数据
-    this.sudokuBoard.init(); // 初始化棋盘
-    cancelAnimationFrame(this.aniId); // 取消之前的动画循环
-    this.aniId = requestAnimationFrame(this.loop.bind(this)); // 启动新的动画循环
+    GameGlobal.databus.reset();
+    this.sudokuBoard.init();
+    this.render();  // Force initial render to ensure buttonArea is created
+    cancelAnimationFrame(this.aniId);
+    this.aniId = requestAnimationFrame(this.loop.bind(this));
   }
+  
 
   /**
    * 监听玩家点击数字填充数独棋盘的逻辑
@@ -56,23 +58,31 @@ export default class Main {
 
   // 触摸事件处理函数
   handleTouch(event) {
-        const { clientX, clientY } = event.touches[0];
-    
-        const btnArea = GameGlobal.sudokuBoard.buttonArea;
-        if (
-        clientY >= btnArea.y &&
-        clientY <= btnArea.y + btnArea.buttonSize &&
-        clientX >= btnArea.x &&
-        clientX <= btnArea.x + 9 * btnArea.buttonSize
-        ) {
-        // 选择数字
-        const selectedNumber = Math.floor((clientX - btnArea.x) / btnArea.buttonSize) + 1;
-        GameGlobal.databus.selectedNumber = selectedNumber;
-        } else {
-        // 点击棋盘放置数字
-        GameGlobal.sudokuBoard.placeSelectedNumber(clientX, clientY);
-        }
+    const { clientX, clientY } = event.touches[0];
+    const btnArea = GameGlobal.sudokuBoard.buttonArea;
+  
+    // 如果buttonArea未定义，防止报错
+    if (!btnArea) {
+      console.log("Button area not initialized yet.");
+      return;
     }
+  
+    if (
+      clientY >= btnArea.y &&
+      clientY <= btnArea.y + btnArea.buttonSize &&
+      clientX >= btnArea.x &&
+      clientX <= btnArea.x + 9 * btnArea.buttonSize
+    ) {
+      const selectedNumber = Math.floor((clientX - btnArea.x) / btnArea.buttonSize) + 1;
+      GameGlobal.databus.selectedNumber = selectedNumber;
+      console.log(`Selected Number: ${selectedNumber}`);
+      return;
+    }
+  
+    // 点击棋盘放置数字
+    GameGlobal.sudokuBoard.placeSelectedNumber(clientX, clientY);
+  }
+  
   /**
    * 游戏逻辑更新函数
    */
@@ -87,9 +97,18 @@ export default class Main {
    */
   render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空画布
-    this.sudokuBoard.render(ctx); // 绘制数独棋盘
-    this.gameInfo.render(ctx); // 绘制UI（分数/时间/错误）
+  
+    this.sudokuBoard.render(ctx);  // 绘制数独棋盘
+    this.sudokuBoard.renderNumberButtons(
+      ctx,
+      (canvas.width - Math.min(canvas.width * 0.9, canvas.height * 0.7)) / 2,
+      canvas.height * 0.15 + Math.min(canvas.width * 0.9, canvas.height * 0.7) + 20,
+      Math.min(canvas.width * 0.9, canvas.height * 0.7)
+    );
+  
+    this.gameInfo.render(ctx);  // 绘制UI
   }
+  
 
   /**
    * 游戏主循环
