@@ -1,18 +1,17 @@
 export default class SudokuBoard {
     constructor() {
-      this.grid = []; // 9x9 Sudoku grid
-      this.originalGrid = []; // Stores the initial unsolved grid for reference
-      this.size = 9; // Standard Sudoku size
-    }
-  
-    /**
-     * 初始化棋盘，生成一个新的数独
-     */
-    init() {
-      this.grid = this.generateSudoku();
-      this.originalGrid = JSON.parse(JSON.stringify(this.grid)); // 保存初始棋盘状态
-    }
-  
+        this.grid = [];  // 9x9 Sudoku grid
+        this.originalGrid = [];  // Initial unsolved grid
+        this.mistakes = {};  // Track incorrect cells
+        this.size = 9;
+      }
+    
+      init() {
+        this.grid = this.generateSudoku();
+        this.originalGrid = JSON.parse(JSON.stringify(this.grid));
+        this.mistakes = {};  // Reset mistakes when restarting
+      }
+    
     /**
      * 生成一个有效的数独棋盘
      */
@@ -107,8 +106,16 @@ export default class SudokuBoard {
      * 在数独中放置数字
      */
     placeNumber(x, y, value) {
-      this.grid[x][y] = value;
-    }
+        console.log("The current value is", this.grid[x][y])
+        this.grid[x][y] = value;
+        console.log("the correct value",this.originalGrid[x][y])
+        if (value !== this.originalGrid[x][y]) {
+          this.mistakes[`${x},${y}`] = true;  // Mark cell as incorrect
+          GameGlobal.databus.errors += 1;  // Increment errors
+        } else {
+          delete this.mistakes[`${x},${y}`];  // Remove from mistakes if corrected
+        }
+      }
   
     /**
      * 检查数独是否完成
@@ -145,55 +152,55 @@ export default class SudokuBoard {
       return true;
     }
   
-    /**
-     * 渲染数独棋盘
-     */
-    render(ctx) {
-        const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
-        const cellSize = boardSize / this.size;
-      
-        const startX = (canvas.width - boardSize) / 2;
-        const startY = canvas.height * 0.15;
-      
-        // 绘制数独棋盘
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(startX, startY, boardSize, boardSize);
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 1;
-      
-        for (let i = 0; i <= this.size; i++) {
-          ctx.beginPath();
-          ctx.moveTo(startX + i * cellSize, startY);
-          ctx.lineTo(startX + i * cellSize, startY + boardSize);
-          ctx.stroke();
-      
-          ctx.beginPath();
-          ctx.moveTo(startX, startY + i * cellSize);
-          ctx.lineTo(startX + boardSize, startY + i * cellSize);
-          ctx.stroke();
-        }
-      
-        // 绘制数字
-        ctx.font = `${cellSize / 2}px Arial`;
-        ctx.fillStyle = '#000';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-      
-        for (let row = 0; row < this.size; row++) {
-          for (let col = 0; col < this.size; col++) {
-            if (this.grid[row][col] !== 0) {
-              ctx.fillText(
-                this.grid[row][col],
-                startX + col * cellSize + cellSize / 2,
-                startY + row * cellSize + cellSize / 2
-              );
-            }
-          }
-        }
-      
-        // 绘制数字选择按钮
-        this.renderNumberButtons(ctx, startX, startY + boardSize + 20, boardSize);
+  /**
+   * Render the Sudoku grid and handle mistakes
+   */
+  render(ctx) {
+    const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
+    const cellSize = boardSize / this.size;
+
+    const startX = (canvas.width - boardSize) / 2;
+    const startY = canvas.height * 0.15;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(startX, startY, boardSize, boardSize);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i <= this.size; i++) {
+      ctx.beginPath();
+      ctx.moveTo(startX + i * cellSize, startY);
+      ctx.lineTo(startX + i * cellSize, startY + boardSize);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(startX, startY + i * cellSize);
+      ctx.lineTo(startX + boardSize, startY + i * cellSize);
+      ctx.stroke();
     }
+
+    // Render numbers and mark mistakes
+    ctx.font = `${cellSize / 2}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    for (let row = 0; row < this.size; row++) {
+      for (let col = 0; col < this.size; col++) {
+        if (this.grid[row][col] !== 0) {
+          if (this.mistakes[`${row},${col}`]) {
+            ctx.fillStyle = '#ff4d4d';  // Red for mistakes
+          } else {
+            ctx.fillStyle = '#000';  // Black for correct numbers
+          }
+          ctx.fillText(
+            this.grid[row][col],
+            startX + col * cellSize + cellSize / 2,
+            startY + row * cellSize + cellSize / 2
+          );
+        }
+      }
+    }
+  }
       
       // 绘制1-9数字按钮
       renderNumberButtons(ctx, x, y, width) {
@@ -234,7 +241,8 @@ export default class SudokuBoard {
               this.placeNumber(row, col, selectedNumber);
               console.log(`Placed ${selectedNumber} at row: ${row}, col: ${col}`);
             } else {
-              console.log(`Cannot place ${selectedNumber} at row: ${row}, col: ${col}`);
+              this.placeNumber(row,col,selectedNumber);
+              console.log(`Placed the WRONG ${selectedNumber} at row: ${row}, col: ${col}`);
             }
           } else {
             console.log("No number selected!");
@@ -242,7 +250,6 @@ export default class SudokuBoard {
         } else {
           console.log("Touched outside the board.");
         }
-      }
-      
+      } 
   }
   
