@@ -28,7 +28,6 @@ export default class Main {
         this.aniId = requestAnimationFrame(this.loop.bind(this));
     }
     
-
     playerInput(x, y, value) {
         if (this.sudokuBoard.canPlaceNumber(x, y, value)) {
         this.sudokuBoard.placeNumber(x, y, value);
@@ -83,7 +82,6 @@ export default class Main {
         // Place number on Sudoku grid
         GameGlobal.sudokuBoard.placeSelectedNumber(clientX, clientY);
     }
-    
     
     update() {
         if (GameGlobal.databus.isGameOver) return;

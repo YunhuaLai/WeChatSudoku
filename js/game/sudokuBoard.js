@@ -116,23 +116,32 @@ export default class SudokuBoard {
      */
     placeNumber(x, y, value) {
         console.log(`Attempting to place ${value} at [${x}, ${y}]`);
-        
-        // Store move for undo
-        this.moveHistory.push({ x, y, value: this.grid[x][y] });  // Save the previous value
+    
+        // Prevent overwriting original numbers
+        if (this.originalGrid[x][y] !== 0) {
+            console.log("This cell cannot be changed. It's part of the original puzzle.");
+            return;
+        }
+    
+        // Store move for undo (track the previous value)
+        this.moveHistory.push({ x, y, value: this.grid[x][y] });
+    
+        // Place the number temporarily
         this.grid[x][y] = value;
-      
+    
         // Track the last placement for highlighting
         GameGlobal.databus.lastPlacement = { row: x, col: y };
-      
-        // Mark as a mistake if the value is incorrect
-        if (value !== this.originalGrid[x][y]) {
-          this.mistakes[`${x},${y}`] = true;
-          GameGlobal.databus.errors += 1;
-          console.log(`Error! ${value} is incorrect at [${x}, ${y}].`);
+    
+        // Validate placement using isValid
+        if (!this.isValid(this.grid, x, y, value)) {
+            this.mistakes[`${x},${y}`] = true;  // Mark mistake if invalid
+            GameGlobal.databus.errors += 1;  // Increment error count
+            console.log(`Error! ${value} is invalid at [${x}, ${y}]. Total errors: ${GameGlobal.databus.errors}`);
         } else {
-          delete this.mistakes[`${x},${y}`];
+            delete this.mistakes[`${x},${y}`];  // Remove mistake if corrected
+            console.log(`Correct placement of ${value} at [${x}, ${y}]`);
         }
-      }
+    }
       
     /**
      * 检查数独是否完成
@@ -154,21 +163,29 @@ export default class SudokuBoard {
      * @param {number} num 填入的数字
      */
     isValid(board, row, col, num) {
-      for (let i = 0; i < this.size; i++) {
-        if (board[row][i] === num || board[i][col] === num) return false;
-      }
-  
-      const startRow = Math.floor(row / 3) * 3;
-      const startCol = Math.floor(col / 3) * 3;
-  
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-          if (board[startRow + r][startCol + c] === num) return false;
+        // Row and Column Validation
+        for (let i = 0; i < this.size; i++) {
+            if ((board[row][i] === num && i !== col) || 
+                (board[i][col] === num && i !== row)) {
+                return false;
+            }
         }
-      }
-      return true;
+    
+        // 3x3 Grid Validation
+        const startRow = Math.floor(row / 3) * 3;
+        const startCol = Math.floor(col / 3) * 3;
+    
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                if (board[startRow + r][startCol + c] === num && 
+                    (startRow + r !== row || startCol + c !== col)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
-
+    
     placeSelectedNumber(x, y) {
         const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
         const startX = (canvas.width - boardSize) / 2;
@@ -181,10 +198,10 @@ export default class SudokuBoard {
         
             const selectedNumber = GameGlobal.databus.selectedNumber;
             if (selectedNumber) {
-            this.placeNumber(row, col, selectedNumber);  // Always place the number
-            console.log(`Placed ${selectedNumber} at row: ${row}, col: ${col}`);
+                this.placeNumber(row, col, selectedNumber);  // Always place the number
+                console.log(`Placed ${selectedNumber} at row: ${row}, col: ${col}`);
             } else {
-            console.log("No number selected!");
+                console.log("No number selected!");
             }
         } else {
             console.log("Touched outside the board.");
