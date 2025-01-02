@@ -1,8 +1,17 @@
+import {
+    renderBoard,
+    renderNumbers,
+    renderHighlight,
+    renderNumberButtons,
+    renderRedoButton
+} from './renderSudoku';
+
 export default class SudokuBoard {
     constructor() {
         this.grid = [];  // 9x9 Sudoku grid
         this.originalGrid = [];  // Initial unsolved grid
         this.mistakes = {};  // Track incorrect cells
+        this.moveHistory = [];  // Store placed numbers for redo
         this.size = 9;
       }
     
@@ -106,17 +115,25 @@ export default class SudokuBoard {
      * 在数独中放置数字
      */
     placeNumber(x, y, value) {
-        console.log("The current value is", this.grid[x][y])
+        console.log(`Attempting to place ${value} at [${x}, ${y}]`);
+        
+        // Store move for undo
+        this.moveHistory.push({ x, y, value: this.grid[x][y] });  // Save the previous value
         this.grid[x][y] = value;
-        console.log("the correct value",this.originalGrid[x][y])
+      
+        // Track the last placement for highlighting
+        GameGlobal.databus.lastPlacement = { row: x, col: y };
+      
+        // Mark as a mistake if the value is incorrect
         if (value !== this.originalGrid[x][y]) {
-          this.mistakes[`${x},${y}`] = true;  // Mark cell as incorrect
-          GameGlobal.databus.errors += 1;  // Increment errors
+          this.mistakes[`${x},${y}`] = true;
+          GameGlobal.databus.errors += 1;
+          console.log(`Error! ${value} is incorrect at [${x}, ${y}].`);
         } else {
-          delete this.mistakes[`${x},${y}`];  // Remove from mistakes if corrected
+          delete this.mistakes[`${x},${y}`];
         }
       }
-  
+      
     /**
      * 检查数独是否完成
      */
@@ -151,105 +168,68 @@ export default class SudokuBoard {
       }
       return true;
     }
-  
-  /**
-   * Render the Sudoku grid and handle mistakes
-   */
-  render(ctx) {
-    const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
-    const cellSize = boardSize / this.size;
-
-    const startX = (canvas.width - boardSize) / 2;
-    const startY = canvas.height * 0.15;
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(startX, startY, boardSize, boardSize);
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
-
-    for (let i = 0; i <= this.size; i++) {
-      ctx.beginPath();
-      ctx.moveTo(startX + i * cellSize, startY);
-      ctx.lineTo(startX + i * cellSize, startY + boardSize);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(startX, startY + i * cellSize);
-      ctx.lineTo(startX + boardSize, startY + i * cellSize);
-      ctx.stroke();
-    }
-
-    // Render numbers and mark mistakes
-    ctx.font = `${cellSize / 2}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    for (let row = 0; row < this.size; row++) {
-      for (let col = 0; col < this.size; col++) {
-        if (this.grid[row][col] !== 0) {
-          if (this.mistakes[`${row},${col}`]) {
-            ctx.fillStyle = '#ff4d4d';  // Red for mistakes
-          } else {
-            ctx.fillStyle = '#000';  // Black for correct numbers
-          }
-          ctx.fillText(
-            this.grid[row][col],
-            startX + col * cellSize + cellSize / 2,
-            startY + row * cellSize + cellSize / 2
-          );
-        }
-      }
-    }
-  }
-      
-      // 绘制1-9数字按钮
-      renderNumberButtons(ctx, x, y, width) {
-        const buttonSize = width / 9;
-        ctx.strokeStyle = '#000';
-      
-        if (!this.buttonArea) {
-          // 初始化按钮区域，避免undefined
-          this.buttonArea = { x, y, buttonSize };
-        }
-      
-        for (let i = 1; i <= 9; i++) {
-          const btnX = x + (i - 1) * buttonSize;
-          ctx.fillStyle = GameGlobal.databus.selectedNumber === i ? '#dcdcdc' : '#f0f0f0';
-          ctx.fillRect(btnX, y, buttonSize, buttonSize);
-          ctx.strokeRect(btnX, y, buttonSize, buttonSize);
-      
-          ctx.fillStyle = '#000';
-          ctx.fillText(i, btnX + buttonSize / 2, y + buttonSize / 2);
-        }
-      }
 
     placeSelectedNumber(x, y) {
         const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
         const startX = (canvas.width - boardSize) / 2;
         const startY = canvas.height * 0.15;
         const cellSize = boardSize / this.size;
-      
-        // 判断点击是否在棋盘内
+        
         if (x >= startX && x <= startX + boardSize && y >= startY && y <= startY + boardSize) {
-          const col = Math.floor((x - startX) / cellSize);
-          const row = Math.floor((y - startY) / cellSize);
-      
-          const selectedNumber = GameGlobal.databus.selectedNumber;
-          if (selectedNumber) {
-            // 确认能否放置数字
-            if (this.canPlaceNumber(row, col, selectedNumber)) {
-              this.placeNumber(row, col, selectedNumber);
-              console.log(`Placed ${selectedNumber} at row: ${row}, col: ${col}`);
+            const col = Math.floor((x - startX) / cellSize);
+            const row = Math.floor((y - startY) / cellSize);
+        
+            const selectedNumber = GameGlobal.databus.selectedNumber;
+            if (selectedNumber) {
+            this.placeNumber(row, col, selectedNumber);  // Always place the number
+            console.log(`Placed ${selectedNumber} at row: ${row}, col: ${col}`);
             } else {
-              this.placeNumber(row,col,selectedNumber);
-              console.log(`Placed the WRONG ${selectedNumber} at row: ${row}, col: ${col}`);
-            }
-          } else {
             console.log("No number selected!");
-          }
+            }
         } else {
-          console.log("Touched outside the board.");
+            console.log("Touched outside the board.");
         }
-      } 
+    }
+    
+    undoLastMove() {
+        if (this.moveHistory.length > 0) {
+          const lastMove = this.moveHistory.pop();
+          const { x, y, value } = lastMove;
+      
+          console.log(`Undo: Replacing [${x}, ${y}] with ${value}`);
+          this.grid[x][y] = value;  // Restore the original value
+      
+          // Remove from mistakes if it was a wrong placement
+          delete this.mistakes[`${x},${y}`];
+      
+          // Update the last placement for visual feedback
+          GameGlobal.databus.lastPlacement = { row: x, col: y };
+        } else {
+          console.log("No moves to undo.");
+        }
+    }
+
+    renderRedoButton(ctx, x, y, width) {
+        const buttonSize = width / 2;
+      
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(x + width / 4, y, buttonSize, buttonSize / 2);
+        ctx.strokeStyle = '#000';
+        ctx.strokeRect(x + width / 4, y, buttonSize, buttonSize / 2);
+      
+        ctx.fillStyle = '#000';
+        ctx.font = `${buttonSize / 3}px Arial`;
+        ctx.fillText("Undo", x + width / 2, y + buttonSize / 4);
+        
+        // Store redo button area for touch events
+        this.redoButtonArea = {
+          x: x + width / 4,
+          y,
+          width: buttonSize,
+          height: buttonSize / 2
+        };
+    }
+      
+
   }
   
