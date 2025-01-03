@@ -1,37 +1,44 @@
-import {
-    renderBoard,
-    renderNumbers,
-    renderHighlight,
-    renderNumberButtons,
-    renderRedoButton
-} from './renderSudoku';
+
 
 export default class SudokuBoard {
     constructor() {
-        this.grid = [];  // 9x9 Sudoku grid
-        this.originalGrid = [];  // Initial unsolved grid
-        this.mistakes = {};  // Track incorrect cells
-        this.moveHistory = [];  // Store placed numbers for redo
-        this.size = 9;
-      }
+        this.grid = [];  // Sudoku grid
+        this.originalGrid = [];  // Unsolved grid
+        this.mistakes = {};  // Mistakes (highlighted in red)
+        this.moveHistory = [];  // Track player moves for undo
+        this.marks = {};  // Store candidate marks for each cell
+        this.size = 9;  // Standard 9x9 grid
+        this.markingMode = false;  // Marking mode toggle
+    }
     
-      init() {
+    init() {
         this.grid = this.generateSudoku();
         this.originalGrid = JSON.parse(JSON.stringify(this.grid));
         this.mistakes = {};  // Reset mistakes when restarting
-      }
+    
+        // Ensure the grid is properly populated
+        if (!this.grid || this.grid.length !== this.size) {
+            console.error("Grid failed to initialize.");
+            this.grid = Array.from({ length: this.size }, () => Array(this.size).fill(0));
+        }
+    }
     
     /**
      * 生成一个有效的数独棋盘
      */
     generateSudoku() {
-      let board = Array.from({ length: this.size }, () => Array(this.size).fill(0));
-  
-      this.fillBoard(board);  // 填充完整的棋盘
-      this.removeNumbers(board);  // 删除部分数字，生成谜题
-  
-      return board;
+        let board = Array.from({ length: this.size }, () => Array(this.size).fill(0));
+        this.fillBoard(board);
+        this.removeNumbers(board);
+    
+        // Check if the board was properly filled
+        if (!board || board.length !== this.size || !board[0]) {
+            console.error("Failed to generate Sudoku board.");
+            return Array.from({ length: this.size }, () => Array(this.size).fill(0));
+        }
+        return board;
     }
+    
   
     /**
      * 填充完整的数独棋盘
@@ -102,6 +109,12 @@ export default class SudokuBoard {
       solve(0, 0);
       return solutions === 1;
     }
+
+    // Toggle marking mode
+    toggleMarkingMode() {
+        this.markingMode = !this.markingMode;
+        console.log(`Marking Mode: ${this.markingMode ? "ON" : "OFF"}`);
+    }
   
     /**
      * 检查是否可以在指定位置放置数字
@@ -110,37 +123,52 @@ export default class SudokuBoard {
       if (this.originalGrid[x][y] !== 0) return false;  // 初始格子不可修改
       return this.isValid(this.grid, x, y, value);
     }
-  
+    
     /**
      * 在数独中放置数字
      */
     placeNumber(x, y, value) {
         console.log(`Attempting to place ${value} at [${x}, ${y}]`);
-    
-        // Prevent overwriting original numbers
-        if (this.originalGrid[x][y] !== 0) {
-            console.log("This cell cannot be changed. It's part of the original puzzle.");
-            return;
-        }
-    
-        // Store move for undo (track the previous value)
-        this.moveHistory.push({ x, y, value: this.grid[x][y] });
-    
-        // Place the number temporarily
-        this.grid[x][y] = value;
-    
-        // Track the last placement for highlighting
-        GameGlobal.databus.lastPlacement = { row: x, col: y };
-    
-        // Validate placement using isValid
-        if (!this.isValid(this.grid, x, y, value)) {
-            this.mistakes[`${x},${y}`] = true;  // Mark mistake if invalid
-            GameGlobal.databus.errors += 1;  // Increment error count
-            console.log(`Error! ${value} is invalid at [${x}, ${y}]. Total errors: ${GameGlobal.databus.errors}`);
+
+        if (this.markingMode) {
+            this.placeMark(x, y, value);  // Place candidate mark if marking mode is on
         } else {
-            delete this.mistakes[`${x},${y}`];  // Remove mistake if corrected
-            console.log(`Correct placement of ${value} at [${x}, ${y}]`);
+            // Standard number placement
+            if (this.originalGrid[x][y] !== 0) {
+                console.log("This cell cannot be changed.");
+                return;
+            }
+
+            this.moveHistory.push({ x, y, value: this.grid[x][y] });
+            this.grid[x][y] = value;
+            GameGlobal.databus.lastPlacement = { row: x, col: y };
+
+            if (!this.isValid(this.grid, x, y, value)) {
+                this.mistakes[`${x},${y}`] = true;
+                GameGlobal.databus.errors += 1;
+                console.log(`Error! ${value} is invalid at [${x}, ${y}].`);
+            } else {
+                delete this.mistakes[`${x},${y}`];
+            }
         }
+    }
+
+    // Place marks (small candidates)
+    placeMark(x, y, value) {
+        if (this.originalGrid[x][y] !== 0) return;
+
+        const key = `${x},${y}`;
+        if (!this.marks[key]) {
+            this.marks[key] = new Set();  // Initialize mark set if not present
+        }
+
+        // Toggle mark – if the number is already marked, remove it
+        if (this.marks[key].has(value)) {
+            this.marks[key].delete(value);
+        } else {
+            this.marks[key].add(value);
+        }
+        console.log(`Marks at [${x}, ${y}]:`, Array.from(this.marks[key]));
     }
       
     /**

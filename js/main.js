@@ -1,4 +1,9 @@
-import { renderBoard, renderNumberButtons, renderUndoButton } from './game/renderSudoku';
+import { 
+    renderBoard, 
+    renderNumberButtons, 
+    renderUndoButton, 
+    renderMarkingButton  // Import the marking button renderer
+} from './game/renderSudoku';
 import SudokuBoard from './game/sudokuBoard';
 import GameInfo from './runtime/gameinfo';
 import DataBus from './databus';
@@ -22,7 +27,7 @@ export default class Main {
     start() {
         GameGlobal.databus.reset();
         this.sudokuBoard.init();
-        GameGlobal.databus.selectedNumber = null;  // Clear selected number on restart
+        console.log("Sudoku grid initialized:", this.sudokuBoard.grid);
         this.render();  
         cancelAnimationFrame(this.aniId);
         this.aniId = requestAnimationFrame(this.loop.bind(this));
@@ -43,44 +48,50 @@ export default class Main {
 
     handleTouch(event) {
         const { clientX, clientY } = event.touches[0];
-        console.log(`Touch at: x=${clientX}, y=${clientY}`);
-    
         const redoArea = GameGlobal.sudokuBoard.redoButtonArea;
         const btnArea = GameGlobal.sudokuBoard.buttonArea;
+        const markButtonArea = GameGlobal.sudokuBoard.markButtonArea;  // Marking button area
     
-        // Debug button areas
-        console.log('Redo Area:', redoArea);
-        console.log('Button Area:', btnArea);
-    
-        // Handle Undo Button Touch
-        if (
-            redoArea &&
-            clientX >= redoArea.x &&
-            clientX <= redoArea.x + redoArea.width &&
-            clientY >= redoArea.y &&
-            clientY <= redoArea.y + redoArea.height
-        ) {
+        // Handle undo button
+        if (redoArea && 
+            clientX >= redoArea.x && 
+            clientX <= redoArea.x + redoArea.width && 
+            clientY >= redoArea.y && 
+            clientY <= redoArea.y + redoArea.height) {
             GameGlobal.sudokuBoard.undoLastMove();
-            console.log("Undo button pressed");
             return;
         }
     
-        // Handle Number Button Touch
-        if (
-            btnArea &&
+        // Handle marking mode button
+        if (markButtonArea && 
+            clientX >= markButtonArea.x && 
+            clientX <= markButtonArea.x + markButtonArea.width && 
+            clientY >= markButtonArea.y && 
+            clientY <= markButtonArea.y + markButtonArea.height) {
+            GameGlobal.sudokuBoard.toggleMarkingMode();
+            console.log("Marking mode toggled");
+            return;
+        }
+    
+        // Handle number selection (mark or place)
+        if (btnArea && 
             clientY >= btnArea.y &&
             clientY <= btnArea.y + btnArea.buttonSize &&
             clientX >= btnArea.x &&
-            clientX <= btnArea.x + 9 * btnArea.buttonSize
-        ) {
+            clientX <= btnArea.x + 9 * btnArea.buttonSize) {
             const selectedNumber = Math.floor((clientX - btnArea.x) / btnArea.buttonSize) + 1;
             GameGlobal.databus.selectedNumber = selectedNumber;
-            console.log(`Selected Number: ${selectedNumber}`);
             return;
         }
     
-        // Place number on Sudoku grid
+        // Place number or mark on Sudoku grid
         GameGlobal.sudokuBoard.placeSelectedNumber(clientX, clientY);
+    }
+    
+    
+    // Toggle marking mode with a button press
+    toggleMarkingMode() {
+        GameGlobal.sudokuBoard.toggleMarkingMode();
     }
     
     update() {
@@ -89,17 +100,28 @@ export default class Main {
 
     render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    
         const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
         const startX = (canvas.width - boardSize) / 2;
         const startY = canvas.height * 0.15;
-
+    
+        // Render Sudoku grid and numbers
         renderBoard(ctx, this.sudokuBoard, boardSize, startX, startY);
-        renderNumberButtons(ctx, startX, startY + boardSize + 20, boardSize, GameGlobal.databus.selectedNumber);
-        renderUndoButton(ctx, startX, startY + boardSize + 100, boardSize);
+    
+        // Render number buttons
+        const buttonY = startY + boardSize + 20;
+        renderNumberButtons(ctx, startX, buttonY, boardSize, GameGlobal.databus.selectedNumber);
+    
+        // Render undo button below number buttons
+        renderUndoButton(ctx, startX, buttonY + 60, boardSize);
+    
+        // Render marking mode button below undo button
+        renderMarkingButton(ctx, startX, buttonY + 120, boardSize);
+    
+        // Render game info (score, errors, etc.)
         this.gameInfo.render(ctx);
     }
-
+    
     loop() {
         this.update();
         this.render();

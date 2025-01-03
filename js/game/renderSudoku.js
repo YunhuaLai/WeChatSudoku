@@ -19,30 +19,63 @@ export function renderBoard(ctx, sudokuBoard, boardSize, startX, startY) {
         ctx.stroke();
     }
 
-    renderNumbers(ctx, sudokuBoard.grid, sudokuBoard.mistakes, sudokuBoard.size, boardSize, startX, startY);
+    renderNumbers(ctx, sudokuBoard.grid, sudokuBoard.marks ,sudokuBoard.mistakes, sudokuBoard.size, boardSize, startX, startY);
     renderHighlight(ctx, GameGlobal.databus.lastPlacement, sudokuBoard.size, boardSize, startX, startY);
 }
 
-export function renderNumbers(ctx, grid, mistakes, gridSize, boardSize, startX, startY) {
+export function renderNumbers(ctx, grid, marks, mistakes, gridSize, boardSize, startX, startY) {
     const cellSize = boardSize / gridSize;
 
-    ctx.font = `${cellSize / 2}px Arial`;
+    // Test larger font for visibility
+    ctx.font = `${Math.max(cellSize / 2, 20)}px Arial`;  
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
+            const key = `${row},${col}`;
+    
+            // Prevent accessing undefined rows
+            if (!grid[row] || grid[row][col] === undefined) continue;
+    
+            // Draw main grid numbers
             if (grid[row][col] !== 0) {
-                ctx.fillStyle = mistakes[`${row},${col}`] ? '#ff4d4d' : '#000';
+                ctx.fillStyle = mistakes[key] ? '#ff4d4d' : '#000';
                 ctx.fillText(
                     grid[row][col],
                     startX + col * cellSize + cellSize / 2,
                     startY + row * cellSize + cellSize / 2
                 );
+                ctx.strokeStyle = '#000';  // Outline for visibility
+                ctx.strokeText(
+                    grid[row][col],
+                    startX + col * cellSize + cellSize / 2,
+                    startY + row * cellSize + cellSize / 2
+                );
+            }
+    
+            // Draw candidate marks (smaller numbers)
+            if (marks[key] ) {  // Check if marks exist and are not empty
+                ctx.font = `${Math.max(cellSize / 4, 15)}px Arial`;
+                ctx.fillStyle = '#888';
+                const markArray = Array.from(marks[key]);
+                
+                for (let i = 0; i < markArray.length; i++) {
+                    const mark = markArray[i];
+                    const offsetX = (i % 3) * (cellSize / 3);
+                    const offsetY = Math.floor(i / 3) * (cellSize / 3);
+                    
+                    ctx.fillText(
+                        mark,
+                        startX + col * cellSize + offsetX + cellSize / 6,
+                        startY + row * cellSize + offsetY + cellSize / 4
+                    );
+                }
             }
         }
     }
 }
+
 
 export function renderHighlight(ctx, lastPlacement, gridSize, boardSize, startX, startY) {
     if (lastPlacement) {
@@ -101,3 +134,22 @@ export function renderUndoButton(ctx, x, y, width) {
     };
 }
 
+export function renderMarkingButton(ctx, x, y, width) {
+    const buttonHeight = width / 10;
+
+    ctx.fillStyle = GameGlobal.sudokuBoard.markingMode ? '#aaf0d1' : '#f0f0f0';  // Light green when active
+    ctx.fillRect(x, y, width, buttonHeight);
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(x, y, width, buttonHeight);
+
+    ctx.fillStyle = '#000';
+    ctx.fillText("Marking Mode", x + width / 2, y + buttonHeight / 2);
+
+    // Track button area for touch detection
+    GameGlobal.sudokuBoard.markButtonArea = {
+        x: x,
+        y: y,
+        width: width,
+        height: buttonHeight
+    };
+}
