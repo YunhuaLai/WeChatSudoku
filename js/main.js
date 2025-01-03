@@ -1,10 +1,10 @@
 import { 
     renderBoard, 
     renderNumberButtons, 
-    renderUndoButton, 
-    renderMarkingButton, 
+    renderUndoAndMarkingButtons,
     renderTimer,
-    renderPauseButton  
+    renderPauseButton,
+    renderPauseOverlay 
 } from './game/renderSudoku';
 import SudokuBoard from './game/sudokuBoard';
 import GameInfo from './runtime/gameinfo';
@@ -67,7 +67,38 @@ export default class Main {
         const btnArea = GameGlobal.sudokuBoard.buttonArea;
         const markButtonArea = GameGlobal.sudokuBoard.markButtonArea; 
         const pauseArea = GameGlobal.sudokuBoard.pauseButtonArea;
+        const resumeArea = GameGlobal.sudokuBoard.resumeButtonArea;  
 
+        // If paused, only allow touch on the resume button
+        if (GameGlobal.databus.isPaused) {
+            if (
+                resumeArea &&
+                clientX >= resumeArea.x &&
+                clientX <= resumeArea.x + resumeArea.width &&
+                clientY >= resumeArea.y &&
+                clientY <= resumeArea.y + resumeArea.height
+            ) {
+                GameGlobal.databus.togglePause();
+                console.log("Game Resumed");
+            } else {
+                console.log("Touch blocked while paused.");
+            }
+            return;  // Prevent touches on the board while paused
+        }
+
+        // Handle pause button click
+        if (
+            pauseArea &&
+            clientX >= pauseArea.x &&
+            clientX <= pauseArea.x + pauseArea.width &&
+            clientY >= pauseArea.y &&
+            clientY <= pauseArea.y + pauseArea.height
+        ) {
+            GameGlobal.databus.togglePause();
+            console.log(GameGlobal.databus.isPaused ? 'Paused' : 'Resumed');
+            return;
+        }
+    
         // Handle undo button
         if (redoArea && 
             clientX >= redoArea.x && 
@@ -99,18 +130,18 @@ export default class Main {
             GameGlobal.databus.selectedNumber = selectedNumber;
             return;
         }
- 
 
-        // Pause button logic
+        // Resume button logic (when overlay is present)
         if (
-            pauseArea &&
-            clientX >= pauseArea.x &&
-            clientX <= pauseArea.x + pauseArea.width &&
-            clientY >= pauseArea.y &&
-            clientY <= pauseArea.y + pauseArea.height
+            GameGlobal.databus.isPaused &&
+            resumeArea &&
+            clientX >= resumeArea.x &&
+            clientX <= resumeArea.x + resumeArea.width &&
+            clientY >= resumeArea.y &&
+            clientY <= resumeArea.y + resumeArea.height
         ) {
             GameGlobal.databus.togglePause();
-            console.log(GameGlobal.databus.isPaused ? 'Paused' : 'Resumed');
+            console.log("Game Resumed");
             return;
         }
     
@@ -134,25 +165,21 @@ export default class Main {
         const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
         const startX = (canvas.width - boardSize) / 2;
         const startY = canvas.height * 0.15;
-    
-        // Render Sudoku grid and numbers
-        renderBoard(ctx, this.sudokuBoard, boardSize, startX, startY);
 
-        // Render timer and pause/resume
+        // Render Timer and Pause Button at Top
         renderTimer(ctx, startX, startY - 50, boardSize);
         renderPauseButton(ctx, startX, startY - 50, boardSize);
-    
-        // Render number buttons
-        const buttonY = startY + boardSize + 20;
-        renderNumberButtons(ctx, startX, buttonY, boardSize, GameGlobal.databus.selectedNumber);
-    
-        // Render undo button below number buttons
-        renderUndoButton(ctx, startX, buttonY + 60, boardSize);
-    
-        // Render marking mode button below undo button
-        renderMarkingButton(ctx, startX, buttonY + 120, boardSize);
-    
-        // Render game info (score, errors, etc.)
+
+        // If paused, only render the overlay (hide grid and numbers)
+        if (GameGlobal.databus.isPaused) {
+            renderPauseOverlay(ctx, boardSize, startX, startY);
+        } else {
+            // Render the Sudoku grid and numbers if not paused
+            renderBoard(ctx, this.sudokuBoard, boardSize, startX, startY);
+            renderNumberButtons(ctx, startX, startY + boardSize + 20, boardSize, GameGlobal.databus.selectedNumber);
+            renderUndoAndMarkingButtons(ctx, startX, startY + boardSize + 100, boardSize);
+        }
+
         this.gameInfo.render(ctx);
     }
     

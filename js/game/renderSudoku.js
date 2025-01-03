@@ -103,42 +103,39 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
     };
 }
 
-export function renderUndoButton(ctx, x, y, width) {
-    const buttonSize = width / 3;  // Reduce width to 1/3 of the grid
-    const buttonHeight = buttonSize / 2;
-
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(x + width / 3, y, buttonSize, buttonHeight);
-    ctx.strokeRect(x + width / 3, y, buttonSize, buttonHeight);
-
-    ctx.fillStyle = '#000';
-    ctx.fillText("Undo", x + width / 2, y + buttonHeight / 2);
-
-    // Initialize redo button area for touch detection
-    GameGlobal.sudokuBoard.redoButtonArea = {
-        x: x + width / 3,
-        y,
-        width: buttonSize,
-        height: buttonHeight
-    };
-}
-
-export function renderMarkingButton(ctx, x, y, width) {
+export function renderUndoAndMarkingButtons(ctx, x, y, width) {
+    const buttonWidth = width / 2 - 10;  // Divide width by 2 with spacing
     const buttonHeight = width / 10;
 
-    ctx.fillStyle = GameGlobal.sudokuBoard.markingMode ? '#aaf0d1' : '#f0f0f0';  // Light green when active
-    ctx.fillRect(x, y, width, buttonHeight);
-    ctx.strokeStyle = '#000';
-    ctx.strokeRect(x, y, width, buttonHeight);
+    // Render Undo Button (Left Side)
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(x, y, buttonWidth, buttonHeight);
+    ctx.strokeRect(x, y, buttonWidth, buttonHeight);
 
     ctx.fillStyle = '#000';
-    ctx.fillText("Marking Mode", x + width / 2, y + buttonHeight / 2);
+    ctx.fillText("Undo", x + buttonWidth / 2, y + buttonHeight / 2);
 
-    // Track button area for touch detection
-    GameGlobal.sudokuBoard.markButtonArea = {
+    // Store Undo Button Area
+    GameGlobal.sudokuBoard.redoButtonArea = {
         x: x,
         y: y,
-        width: width,
+        width: buttonWidth,
+        height: buttonHeight
+    };
+
+    // Render Marking Mode Button (Right Side)
+    ctx.fillStyle = GameGlobal.sudokuBoard.markingMode ? '#aaf0d1' : '#f0f0f0';
+    ctx.fillRect(x + buttonWidth + 20, y, buttonWidth, buttonHeight);  // +20 for spacing
+    ctx.strokeRect(x + buttonWidth + 20, y, buttonWidth, buttonHeight);
+
+    ctx.fillStyle = '#000';
+    ctx.fillText("Mark", x + buttonWidth + 20 + buttonWidth / 2, y + buttonHeight / 2);
+
+    // Store Marking Button Area
+    GameGlobal.sudokuBoard.markButtonArea = {
+        x: x + buttonWidth + 20,
+        y: y,
+        width: buttonWidth,
         height: buttonHeight
     };
 }
@@ -168,8 +165,6 @@ export function renderTimer(ctx, x, y, width) {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
 
-    console.log("Elapsed Time (seconds):", time);  // Debugging output
-
     ctx.font = `${Math.max(width / 18, 24)}px Arial`;
     ctx.textAlign = 'center';
     ctx.fillStyle = '#aaf0d1';
@@ -177,23 +172,91 @@ export function renderTimer(ctx, x, y, width) {
     ctx.fillText(`${minutes}:${seconds.toString().padStart(2, '0')}`, x + width / 2, y + 30);
 }
 
-
 export function renderPauseButton(ctx, x, y, width) {
     const buttonSize = width / 6;
+    const barWidth = buttonSize / 6;
+    const barHeight = buttonSize / 2;
 
     ctx.fillStyle = GameGlobal.databus.isPaused ? '#aaf0d1' : '#f0f0f0';  // Green when paused
-    ctx.fillRect(x + width - buttonSize - 20, y, buttonSize, buttonSize / 2);
+    ctx.fillRect(x + width - buttonSize - 20, y, buttonSize, barHeight);
     ctx.strokeStyle = '#000';
-    ctx.strokeRect(x + width - buttonSize - 20, y, buttonSize, buttonSize / 2);
+    ctx.strokeRect(x + width - buttonSize - 20, y, buttonSize, barHeight);
 
     ctx.fillStyle = '#000';
-    ctx.fillText(GameGlobal.databus.isPaused ? 'Resume' : 'Pause', x + width - buttonSize / 2 - 20, y + buttonSize / 4);
+
+    if (GameGlobal.databus.isPaused) {
+        // Draw play icon (▶️) when paused
+        ctx.beginPath();
+        ctx.moveTo(x + width - buttonSize / 2 - 20, y + barHeight / 4);
+        ctx.lineTo(x + width - buttonSize / 2 + 10, y + barHeight / 2);
+        ctx.lineTo(x + width - buttonSize / 2 - 20, y + (barHeight * 3) / 4);
+        ctx.closePath();
+        ctx.fill();
+    } else {
+        // Draw two vertical bars (||) when running
+        ctx.fillRect(
+            x + width - buttonSize / 2 - barWidth - 20,
+            y + barHeight / 4,
+            barWidth,
+            barHeight / 2
+        );
+        ctx.fillRect(
+            x + width - buttonSize / 2 + barWidth - 20,
+            y + barHeight / 4,
+            barWidth,
+            barHeight / 2
+        );
+    }
 
     // Track pause button area for touch detection
     GameGlobal.sudokuBoard.pauseButtonArea = {
         x: x + width - buttonSize - 20,
         y,
         width: buttonSize,
-        height: buttonSize / 2
+        height: barHeight
+    };
+}
+
+export function renderPauseOverlay(ctx, boardSize, startX, startY) {
+    const overlayColor = 'rgba(0, 0, 0, 0.6)';  // Semi-transparent dark overlay
+    const buttonWidth = boardSize / 3;
+    const buttonHeight = boardSize / 10;
+
+    // Draw overlay covering the entire canvas
+    ctx.fillStyle = overlayColor;
+    ctx.fillRect(startX, startY, boardSize, boardSize);
+
+    // Draw the resume button in the center
+    ctx.fillStyle = '#aaf0d1';
+    ctx.fillRect(
+        startX + (boardSize - buttonWidth) / 2,
+        startY + (boardSize - buttonHeight) / 2,
+        buttonWidth,
+        buttonHeight
+    );
+
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(
+        startX + (boardSize - buttonWidth) / 2,
+        startY + (boardSize - buttonHeight) / 2,
+        buttonWidth,
+        buttonHeight
+    );
+
+    ctx.fillStyle = '#000';
+    ctx.font = `${buttonHeight / 2}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText(
+        "Resume",
+        startX + boardSize / 2,
+        startY + boardSize / 2 + buttonHeight / 4
+    );
+
+    // Track resume button area for touch detection
+    GameGlobal.sudokuBoard.resumeButtonArea = {
+        x: startX + (boardSize - buttonWidth) / 2,
+        y: startY + (boardSize - buttonHeight) / 2,
+        width: buttonWidth,
+        height: buttonHeight
     };
 }
