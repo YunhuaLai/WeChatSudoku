@@ -1,3 +1,6 @@
+import { placeNumber as handlePlaceNumber, placeMark as handlePlaceMark, undoLastMove as handleUndoLastMove } from './moveHandler';
+
+
 
 
 export default class SudokuBoard {
@@ -124,53 +127,18 @@ export default class SudokuBoard {
       return this.isValid(this.grid, x, y, value);
     }
     
-    /**
-     * 在数独中放置数字
-     */
     placeNumber(x, y, value) {
-        console.log(`Attempting to place ${value} at [${x}, ${y}]`);
-
-        if (this.markingMode) {
-            this.placeMark(x, y, value);  // Place candidate mark if marking mode is on
-        } else {
-            // Standard number placement
-            if (this.originalGrid[x][y] !== 0) {
-                console.log("This cell cannot be changed.");
-                return;
-            }
-
-            this.moveHistory.push({ x, y, value: this.grid[x][y] });
-            this.grid[x][y] = value;
-            GameGlobal.databus.lastPlacement = { row: x, col: y };
-
-            if (!this.isValid(this.grid, x, y, value)) {
-                this.mistakes[`${x},${y}`] = true;
-                GameGlobal.databus.errors += 1;
-                console.log(`Error! ${value} is invalid at [${x}, ${y}].`);
-            } else {
-                delete this.mistakes[`${x},${y}`];
-            }
-        }
+        handlePlaceNumber(this, x, y, value);  // Call imported placeNumber
     }
-
-    // Place marks (small candidates)
+    
+    undoLastMove() {
+        handleUndoLastMove(this);  // Call imported undoLastMove
+    }
+    
     placeMark(x, y, value) {
-        if (this.originalGrid[x][y] !== 0) return;
-
-        const key = `${x},${y}`;
-        if (!this.marks[key]) {
-            this.marks[key] = new Set();  // Initialize mark set if not present
-        }
-
-        // Toggle mark – if the number is already marked, remove it
-        if (this.marks[key].has(value)) {
-            this.marks[key].delete(value);
-        } else {
-            this.marks[key].add(value);
-        }
-        console.log(`Marks at [${x}, ${y}]:`, Array.from(this.marks[key]));
+        handlePlaceMark(this, x, y, value);  // Call imported placeMark
     }
-      
+    
     /**
      * 检查数独是否完成
      */
@@ -235,46 +203,5 @@ export default class SudokuBoard {
             console.log("Touched outside the board.");
         }
     }
-    
-    undoLastMove() {
-        if (this.moveHistory.length > 0) {
-          const lastMove = this.moveHistory.pop();
-          const { x, y, value } = lastMove;
-      
-          console.log(`Undo: Replacing [${x}, ${y}] with ${value}`);
-          this.grid[x][y] = value;  // Restore the original value
-      
-          // Remove from mistakes if it was a wrong placement
-          delete this.mistakes[`${x},${y}`];
-      
-          // Update the last placement for visual feedback
-          GameGlobal.databus.lastPlacement = { row: x, col: y };
-        } else {
-          console.log("No moves to undo.");
-        }
-    }
-
-    renderRedoButton(ctx, x, y, width) {
-        const buttonSize = width / 2;
-      
-        ctx.fillStyle = '#f0f0f0';
-        ctx.fillRect(x + width / 4, y, buttonSize, buttonSize / 2);
-        ctx.strokeStyle = '#000';
-        ctx.strokeRect(x + width / 4, y, buttonSize, buttonSize / 2);
-      
-        ctx.fillStyle = '#000';
-        ctx.font = `${buttonSize / 3}px Arial`;
-        ctx.fillText("Undo", x + width / 2, y + buttonSize / 4);
-        
-        // Store redo button area for touch events
-        this.redoButtonArea = {
-          x: x + width / 4,
-          y,
-          width: buttonSize,
-          height: buttonSize / 2
-        };
-    }
-      
-
   }
   

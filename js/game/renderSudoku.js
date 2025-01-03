@@ -25,19 +25,17 @@ export function renderBoard(ctx, sudokuBoard, boardSize, startX, startY) {
 
 export function renderNumbers(ctx, grid, marks, mistakes, gridSize, boardSize, startX, startY) {
     const cellSize = boardSize / gridSize;
-
-    // Test larger font for visibility
-    ctx.font = `${Math.max(cellSize / 2, 20)}px Arial`;  
+    ctx.font = `${Math.max(cellSize / 4, 15)}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
             const key = `${row},${col}`;
-    
+
             // Prevent accessing undefined rows
             if (!grid[row] || grid[row][col] === undefined) continue;
-    
+
             // Draw main grid numbers
             if (grid[row][col] !== 0) {
                 ctx.fillStyle = mistakes[key] ? '#ff4d4d' : '#000';
@@ -46,36 +44,27 @@ export function renderNumbers(ctx, grid, marks, mistakes, gridSize, boardSize, s
                     startX + col * cellSize + cellSize / 2,
                     startY + row * cellSize + cellSize / 2
                 );
-                ctx.strokeStyle = '#000';  // Outline for visibility
-                ctx.strokeText(
-                    grid[row][col],
-                    startX + col * cellSize + cellSize / 2,
-                    startY + row * cellSize + cellSize / 2
-                );
             }
-    
-            // Draw candidate marks (smaller numbers)
-            if (marks[key] ) {  // Check if marks exist and are not empty
-                ctx.font = `${Math.max(cellSize / 4, 15)}px Arial`;
-                ctx.fillStyle = '#888';
+
+            // Render marks in 3x3 layout (Fixed position for each number)
+            if (marks[key]) {
+                ctx.font = `${Math.max(cellSize / 5, 12)}px Arial`;
+                ctx.fillStyle = '#888';  // Light gray for marks
                 const markArray = Array.from(marks[key]);
-                
-                for (let i = 0; i < markArray.length; i++) {
-                    const mark = markArray[i];
-                    const offsetX = (i % 3) * (cellSize / 3);
-                    const offsetY = Math.floor(i / 3) * (cellSize / 3);
-                    
+
+                for (let mark of markArray) {
+                    const { offsetX, offsetY } = getMarkPosition(mark, cellSize);
+
                     ctx.fillText(
                         mark,
-                        startX + col * cellSize + offsetX + cellSize / 6,
-                        startY + row * cellSize + offsetY + cellSize / 4
+                        startX + col * cellSize + offsetX,
+                        startY + row * cellSize + offsetY
                     );
                 }
             }
         }
     }
 }
-
 
 export function renderHighlight(ctx, lastPlacement, gridSize, boardSize, startX, startY) {
     if (lastPlacement) {
@@ -115,19 +104,19 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
 }
 
 export function renderUndoButton(ctx, x, y, width) {
-    const buttonSize = width / 2;
+    const buttonSize = width / 3;  // Reduce width to 1/3 of the grid
     const buttonHeight = buttonSize / 2;
 
     ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(x + width / 4, y, buttonSize, buttonHeight);
-    ctx.strokeRect(x + width / 4, y, buttonSize, buttonHeight);
+    ctx.fillRect(x + width / 3, y, buttonSize, buttonHeight);
+    ctx.strokeRect(x + width / 3, y, buttonSize, buttonHeight);
 
     ctx.fillStyle = '#000';
     ctx.fillText("Undo", x + width / 2, y + buttonHeight / 2);
 
     // Initialize redo button area for touch detection
     GameGlobal.sudokuBoard.redoButtonArea = {
-        x: x + width / 4,
+        x: x + width / 3,
         y,
         width: buttonSize,
         height: buttonHeight
@@ -152,4 +141,24 @@ export function renderMarkingButton(ctx, x, y, width) {
         width: width,
         height: buttonHeight
     };
+}
+
+function getMarkPosition(mark, cellSize) {
+    const positions = {
+        1: { x: 0, y: 0 },
+        2: { x: 1, y: 0 },
+        3: { x: 2, y: 0 },
+        4: { x: 0, y: 1 },
+        5: { x: 1, y: 1 },
+        6: { x: 2, y: 1 },
+        7: { x: 0, y: 2 },
+        8: { x: 1, y: 2 },
+        9: { x: 2, y: 2 }
+    };
+
+    const pos = positions[mark];
+    const offsetX = pos.x * (cellSize / 3) + cellSize / 6;
+    const offsetY = pos.y * (cellSize / 3) + cellSize / 6;
+
+    return { offsetX, offsetY };
 }
