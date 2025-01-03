@@ -2,7 +2,9 @@ import {
     renderBoard, 
     renderNumberButtons, 
     renderUndoButton, 
-    renderMarkingButton  // Import the marking button renderer
+    renderMarkingButton, 
+    renderTimer,
+    renderPauseButton  
 } from './game/renderSudoku';
 import SudokuBoard from './game/sudokuBoard';
 import GameInfo from './runtime/gameinfo';
@@ -24,13 +26,26 @@ export default class Main {
         this.start();
     }
 
-    start() {
-        GameGlobal.databus.reset();
-        this.sudokuBoard.init();
-        console.log("Sudoku grid initialized:", this.sudokuBoard.grid);
-        this.render();  
-        cancelAnimationFrame(this.aniId);
-        this.aniId = requestAnimationFrame(this.loop.bind(this));
+ start() {
+    GameGlobal.databus.reset();
+    this.sudokuBoard.init();
+    GameGlobal.databus.selectedNumber = null;
+
+    // Ensure timer renders immediately
+    this.render();
+    cancelAnimationFrame(this.aniId);
+    this.aniId = requestAnimationFrame(this.loop.bind(this));
+    this.startTimer();
+}
+
+
+    startTimer() {
+        clearInterval(this.timer);  // Clear existing interval if present
+        this.timer = setInterval(() => {
+            if (!GameGlobal.databus.isPaused) {
+                this.render();  // Force re-render every second
+            }
+        }, 1000); 
     }
     
     playerInput(x, y, value) {
@@ -50,8 +65,9 @@ export default class Main {
         const { clientX, clientY } = event.touches[0];
         const redoArea = GameGlobal.sudokuBoard.redoButtonArea;
         const btnArea = GameGlobal.sudokuBoard.buttonArea;
-        const markButtonArea = GameGlobal.sudokuBoard.markButtonArea;  // Marking button area
-    
+        const markButtonArea = GameGlobal.sudokuBoard.markButtonArea; 
+        const pauseArea = GameGlobal.sudokuBoard.pauseButtonArea;
+
         // Handle undo button
         if (redoArea && 
             clientX >= redoArea.x && 
@@ -83,6 +99,20 @@ export default class Main {
             GameGlobal.databus.selectedNumber = selectedNumber;
             return;
         }
+ 
+
+        // Pause button logic
+        if (
+            pauseArea &&
+            clientX >= pauseArea.x &&
+            clientX <= pauseArea.x + pauseArea.width &&
+            clientY >= pauseArea.y &&
+            clientY <= pauseArea.y + pauseArea.height
+        ) {
+            GameGlobal.databus.togglePause();
+            console.log(GameGlobal.databus.isPaused ? 'Paused' : 'Resumed');
+            return;
+        }
     
         // Place number or mark on Sudoku grid
         GameGlobal.sudokuBoard.placeSelectedNumber(clientX, clientY);
@@ -107,6 +137,10 @@ export default class Main {
     
         // Render Sudoku grid and numbers
         renderBoard(ctx, this.sudokuBoard, boardSize, startX, startY);
+
+        // Render timer and pause/resume
+        renderTimer(ctx, startX, startY - 50, boardSize);
+        renderPauseButton(ctx, startX, startY - 50, boardSize);
     
         // Render number buttons
         const buttonY = startY + boardSize + 20;
@@ -123,7 +157,9 @@ export default class Main {
     }
     
     loop() {
-        this.update();
+        if (!GameGlobal.databus.isPaused) {
+            this.update();
+        }
         this.render();
         this.aniId = requestAnimationFrame(this.loop.bind(this));
     }

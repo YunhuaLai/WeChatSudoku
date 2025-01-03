@@ -162,3 +162,38 @@ function getMarkPosition(mark, cellSize) {
 
     return { offsetX, offsetY };
 }
+
+export function renderTimer(ctx, x, y, width) {
+    const time = GameGlobal.databus.getElapsedTime();
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+
+    console.log("Elapsed Time (seconds):", time);  // Debugging output
+
+    ctx.font = `${Math.max(width / 18, 24)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#aaf0d1';
+
+    ctx.fillText(`${minutes}:${seconds.toString().padStart(2, '0')}`, x + width / 2, y + 30);
+}
+
+
+export function renderPauseButton(ctx, x, y, width) {
+    const buttonSize = width / 6;
+
+    ctx.fillStyle = GameGlobal.databus.isPaused ? '#aaf0d1' : '#f0f0f0';  // Green when paused
+    ctx.fillRect(x + width - buttonSize - 20, y, buttonSize, buttonSize / 2);
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(x + width - buttonSize - 20, y, buttonSize, buttonSize / 2);
+
+    ctx.fillStyle = '#000';
+    ctx.fillText(GameGlobal.databus.isPaused ? 'Resume' : 'Pause', x + width - buttonSize / 2 - 20, y + buttonSize / 4);
+
+    // Track pause button area for touch detection
+    GameGlobal.sudokuBoard.pauseButtonArea = {
+        x: x + width - buttonSize - 20,
+        y,
+        width: buttonSize,
+        height: buttonSize / 2
+    };
+}

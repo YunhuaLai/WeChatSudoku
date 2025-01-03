@@ -1,8 +1,5 @@
 import { placeNumber as handlePlaceNumber, placeMark as handlePlaceMark, undoLastMove as handleUndoLastMove } from './moveHandler';
 
-
-
-
 export default class SudokuBoard {
     constructor() {
         this.grid = [];  // Sudoku grid
