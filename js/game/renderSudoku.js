@@ -1,29 +1,38 @@
 export function renderBoard(ctx, sudokuBoard, boardSize, startX, startY) {
     const cellSize = boardSize / sudokuBoard.size;
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(startX, startY, boardSize, boardSize);
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;  // Default thinner lines for the small grid
 
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
-
+    // Draw the 9x9 grid lines
     for (let i = 0; i <= sudokuBoard.size; i++) {
         ctx.beginPath();
-        ctx.moveTo(startX + i * cellSize, startY);
-        ctx.lineTo(startX + i * cellSize, startY + boardSize);
-        ctx.stroke();
-
-        ctx.beginPath();
+        
+        // Horizontal lines
         ctx.moveTo(startX, startY + i * cellSize);
         ctx.lineTo(startX + boardSize, startY + i * cellSize);
+
+        // Vertical lines
+        ctx.moveTo(startX + i * cellSize, startY);
+        ctx.lineTo(startX + i * cellSize, startY + boardSize);
+
+        // Use thicker lines for 3x3 boxes and the outer border
+        if (i % 3 === 0 || i === sudokuBoard.size) {
+            ctx.strokeStyle = '#ddd';  // Light grey-white for emphasis
+            ctx.lineWidth = 3;
+        } else {
+            ctx.strokeStyle = '#ddd';  // Standard black for regular lines
+            ctx.lineWidth = 1;
+        }
         ctx.stroke();
     }
 
-    renderNumbers(ctx, sudokuBoard.grid, sudokuBoard.marks ,sudokuBoard.mistakes, sudokuBoard.size, boardSize, startX, startY);
+    // Render numbers and marks after drawing grid
+    renderNumbers(ctx, sudokuBoard.grid, sudokuBoard.originalGrid, sudokuBoard.marks, sudokuBoard.mistakes, sudokuBoard.size, boardSize, startX, startY);
     renderHighlight(ctx, GameGlobal.databus.lastPlacement, sudokuBoard.size, boardSize, startX, startY);
 }
 
-export function renderNumbers(ctx, grid, marks, mistakes, gridSize, boardSize, startX, startY) {
+export function renderNumbers(ctx, grid, originalGrid, marks, mistakes, gridSize, boardSize, startX, startY) {
     const cellSize = boardSize / gridSize;
     ctx.font = `${Math.max(cellSize / 4, 15)}px Arial`;
     ctx.textAlign = 'center';
@@ -36,9 +45,16 @@ export function renderNumbers(ctx, grid, marks, mistakes, gridSize, boardSize, s
             // Prevent accessing undefined rows
             if (!grid[row] || grid[row][col] === undefined) continue;
 
-            // Draw main grid numbers
+            // Determine color for the number
             if (grid[row][col] !== 0) {
-                ctx.fillStyle = mistakes[key] ? '#ff4d4d' : '#000';
+                if (mistakes[key]) {
+                    ctx.fillStyle = '#ff4d4d';  // Red for mistakes
+                } else if (originalGrid[row][col] !== 0) {
+                    ctx.fillStyle = '#bbb';  // Grey-white for original numbers
+                } else {
+                    ctx.fillStyle = '#007bff';  // Blue for user input
+                }
+
                 ctx.fillText(
                     grid[row][col],
                     startX + col * cellSize + cellSize / 2,
@@ -46,7 +62,7 @@ export function renderNumbers(ctx, grid, marks, mistakes, gridSize, boardSize, s
                 );
             }
 
-            // Render marks in 3x3 layout (Fixed position for each number)
+            // Render marks in 3x3 layout
             if (marks[key]) {
                 ctx.font = `${Math.max(cellSize / 5, 12)}px Arial`;
                 ctx.fillStyle = '#888';  // Light gray for marks

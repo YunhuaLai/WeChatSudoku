@@ -149,7 +149,6 @@ export default class Main {
         GameGlobal.sudokuBoard.placeSelectedNumber(clientX, clientY);
     }
     
-    
     // Toggle marking mode with a button press
     toggleMarkingMode() {
         GameGlobal.sudokuBoard.toggleMarkingMode();
