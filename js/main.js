@@ -49,14 +49,14 @@ export default class Main {
     
     playerInput(x, y, value) {
         if (this.sudokuBoard.canPlaceNumber(x, y, value)) {
-        this.sudokuBoard.placeNumber(x, y, value);
-        GameGlobal.databus.score += 1;
-        } else {
-        GameGlobal.databus.errors += 1;
+            this.sudokuBoard.placeNumber(x, y, value);
+            GameGlobal.databus.score += 1;
+            } else {
+            GameGlobal.databus.errors += 1;
         }
 
         if (this.sudokuBoard.isComplete()) {
-        GameGlobal.databus.gameOver();
+            GameGlobal.databus.gameOver();
         }
     }
 

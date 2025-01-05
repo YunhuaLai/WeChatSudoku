@@ -22,6 +22,7 @@ export function placeNumber(sudokuBoard, row, col, value) {
     sudokuBoard.grid[row][col] = value;
     delete sudokuBoard.marks[key];
 
+    GameGlobal.databus.updateCell(col, row, value); 
     GameGlobal.databus.lastPlacement = { row, col };
 
     // Validate placement
