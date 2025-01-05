@@ -1,75 +1,71 @@
-export function placeNumber(sudokuBoard, x, y, value) {
-    console.log(`Attempting to place ${value} at [${x}, ${y}]`);
+export function placeNumber(sudokuBoard, row, col, value) {
+    console.log(`Attempting to place ${value} at [row: ${row}, col: ${col}]`);
 
-    if (sudokuBoard.markingMode) {
-        placeMark(sudokuBoard, x, y, value);  // Place candidate mark if marking mode is on
-    } else {
-        if (sudokuBoard.originalGrid[x][y] !== 0) {
-            console.log("This cell cannot be changed.");
-            return;
-        }
-
-        // Save current marks before placing number
-        const previousMarks = sudokuBoard.marks[`${x},${y}`] 
-            ? new Set(sudokuBoard.marks[`${x},${y}`]) 
-            : null;
-
-        // Store move in history (includes marks)
-        sudokuBoard.moveHistory.push({
-            type: 'number',
-            x,
-            y,
-            previousValue: sudokuBoard.grid[x][y],  // Previous grid value
-            previousMarks  // Save current marks for undo
-        });
-
-        // Place the number and delete marks
-        sudokuBoard.grid[x][y] = value;
-        delete sudokuBoard.marks[`${x},${y}`];
-
-        GameGlobal.databus.lastPlacement = { row: x, col: y };
-
-        // Handle mistakes
-        if (!sudokuBoard.isValid(sudokuBoard.grid, x, y, value)) {
-            sudokuBoard.mistakes[`${x},${y}`] = true;
-            GameGlobal.databus.errors += 1;
-            console.log(`Error! ${value} is invalid at [${x}, ${y}].`);
-        } else {
-            delete sudokuBoard.mistakes[`${x},${y}`];
-        }
-    }
-}
-
-export function placeMark(sudokuBoard, x, y, value) {
-    // Prevent marking in cells that already have a number
-    if (sudokuBoard.grid[x][y] !== 0) {
-        console.log(`Cannot place mark ${value} at [${x}, ${y}] – cell already filled.`);
+    // Prevent overwriting initial values
+    if (sudokuBoard.originalGrid[row][col] !== 0) {
+        console.log("This cell cannot be changed.");
         return;
     }
 
-    const key = `${x},${y}`;
+    const key = `${row},${col}`;
+    const previousMarks = sudokuBoard.marks[key] ? new Set(sudokuBoard.marks[key]) : null;
+
+    sudokuBoard.moveHistory.push({
+        type: 'number',
+        x: row,  // Store row as x (to align with Sudoku grid logic)
+        y: col,  // Store col as y
+        previousValue: sudokuBoard.grid[row][col],
+        previousMarks
+    });
+
+    // Place the number and clear any marks
+    sudokuBoard.grid[row][col] = value;
+    delete sudokuBoard.marks[key];
+
+    GameGlobal.databus.lastPlacement = { row, col };
+
+    // Validate placement
+    if (!sudokuBoard.isValid(sudokuBoard.grid, row, col, value)) {
+        sudokuBoard.mistakes[key] = true;
+        GameGlobal.databus.errors += 1;
+        console.log(`Error! ${value} is invalid at [${row}, ${col}].`);
+    } else {
+        delete sudokuBoard.mistakes[key];
+    }
+}
+
+export function placeMark(sudokuBoard, row, col, value) {
+    const key = `${row},${col}`;
+
+    // Prevent marking in cells that already have a number
+    if (sudokuBoard.grid[row][col] !== 0) {
+        console.log(`Cannot place mark ${value} at [${row}, ${col}] – cell already filled.`);
+        return;
+    }
+
     const previousMarks = new Set(sudokuBoard.marks[key] || []);
 
-    // Store the state for undo
+    // Store the mark change for undo
     sudokuBoard.moveHistory.push({
         type: 'mark',
-        x,
-        y,
+        x: row,  // Save as row
+        y: col,  // Save as col
         value,
-        previousMarks: new Set(previousMarks)  // Save current marks
+        previousMarks: new Set(previousMarks)
     });
 
     if (!sudokuBoard.marks[key]) {
         sudokuBoard.marks[key] = new Set();
     }
 
-    // Toggle the mark (add/remove)
+    // Toggle mark (remove if exists, add if not)
     if (sudokuBoard.marks[key].has(value)) {
         sudokuBoard.marks[key].delete(value);
+        console.log(`Removed mark ${value} at [${row}, ${col}]`);
     } else {
         sudokuBoard.marks[key].add(value);
+        console.log(`Added mark ${value} at [${row}, ${col}]`);
     }
-    console.log(`Marks at [${x}, ${y}]:`, Array.from(sudokuBoard.marks[key]));
 }
 
 export function undoLastMove(sudokuBoard) {

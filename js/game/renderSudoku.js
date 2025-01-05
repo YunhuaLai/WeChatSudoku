@@ -4,6 +4,9 @@ export function renderBoard(ctx, sudokuBoard, boardSize, startX, startY) {
     ctx.strokeStyle = '#ddd';
     ctx.lineWidth = 1;  // Default thinner lines for the small grid
 
+    // Highlight the selected row, column, and 3x3 box
+    highlightSelection(ctx, sudokuBoard, boardSize, startX, startY);
+
     // Draw the 9x9 grid lines
     for (let i = 0; i <= sudokuBoard.size; i++) {
         ctx.beginPath();
@@ -38,38 +41,57 @@ export function renderNumbers(ctx, grid, originalGrid, marks, mistakes, gridSize
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
+    const highlightedNumber = GameGlobal.databus.highlightedNumber;  
+
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
             const key = `${row},${col}`;
+            const value = grid[row][col];
 
-            // Prevent accessing undefined rows
             if (!grid[row] || grid[row][col] === undefined) continue;
 
-            // Determine color for the number
-            if (grid[row][col] !== 0) {
-                if (mistakes[key]) {
-                    ctx.fillStyle = '#ff4d4d';  // Red for mistakes
-                } else if (originalGrid[row][col] !== 0) {
-                    ctx.fillStyle = '#bbb';  // Grey-white for original numbers
-                } else {
-                    ctx.fillStyle = '#007bff';  // Blue for user input
-                }
+            // 1. Highlight matching numbers
+            if (highlightedNumber && value === highlightedNumber) {
+                ctx.fillStyle = '#d6d6d6';  // Light grey for highlight
+                ctx.fillRect(
+                    startX + col * cellSize,
+                    startY + row * cellSize,
+                    cellSize,
+                    cellSize
+                );
+            }
 
+            // 2. Draw main grid numbers
+            if (value !== 0) {
+                if (mistakes[key]) {
+                    ctx.fillStyle = '#ff4d4d';
+                } else if (originalGrid[row][col] !== 0) {
+                    ctx.fillStyle = '#bbb';
+                } else {
+                    ctx.fillStyle = '#007bff';
+                }
                 ctx.fillText(
-                    grid[row][col],
+                    value,
                     startX + col * cellSize + cellSize / 2,
                     startY + row * cellSize + cellSize / 2
                 );
             }
 
-            // Render marks in 3x3 layout
+            // 3. Draw marks (small numbers)
             if (marks[key]) {
                 ctx.font = `${Math.max(cellSize / 5, 12)}px Arial`;
-                ctx.fillStyle = '#888';  // Light gray for marks
+                ctx.fillStyle = '#888';
                 const markArray = Array.from(marks[key]);
-
+                
                 for (let mark of markArray) {
                     const { offsetX, offsetY } = getMarkPosition(mark, cellSize);
+                    
+                    // Highlight marks that match the selected number
+                    if (highlightedNumber && mark === highlightedNumber) {
+                        ctx.fillStyle = '#ffcc80';  // Light orange for mark highlight
+                    } else {
+                        ctx.fillStyle = '#888';
+                    }
 
                     ctx.fillText(
                         mark,
@@ -275,4 +297,34 @@ export function renderPauseOverlay(ctx, boardSize, startX, startY) {
         width: buttonWidth,
         height: buttonHeight
     };
+}
+
+function highlightSelection(ctx, sudokuBoard, boardSize, startX, startY) {
+    const selectedCell = GameGlobal.databus.selectedCell;
+    if (!selectedCell) return;  // No selection, skip highlighting
+
+    const { x, y } = selectedCell;
+    const cellSize = boardSize / sudokuBoard.size;
+    const subGridSize = 3;
+
+    ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';  // Light grey for highlights
+
+    // Highlight row and column
+    ctx.fillRect(startX, startY + y * cellSize, boardSize, cellSize);  // Row
+    ctx.fillRect(startX + x * cellSize, startY, cellSize, boardSize);  // Column
+
+    // Highlight 3x3 subgrid
+    const boxStartRow = Math.floor(y / subGridSize) * subGridSize;
+    const boxStartCol = Math.floor(x / subGridSize) * subGridSize;
+
+    for (let row = 0; row < subGridSize; row++) {
+        for (let col = 0; col < subGridSize; col++) {
+            ctx.fillRect(
+                startX + (boxStartCol + col) * cellSize,
+                startY + (boxStartRow + row) * cellSize,
+                cellSize,
+                cellSize
+            );
+        }
+    }
 }

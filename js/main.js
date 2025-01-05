@@ -26,18 +26,17 @@ export default class Main {
         this.start();
     }
 
- start() {
-    GameGlobal.databus.reset();
-    this.sudokuBoard.init();
-    GameGlobal.databus.selectedNumber = null;
+    start() {
+        GameGlobal.databus.reset();
+        this.sudokuBoard.init();
+        GameGlobal.databus.selectedNumber = null;
 
-    // Ensure timer renders immediately
-    this.render();
-    cancelAnimationFrame(this.aniId);
-    this.aniId = requestAnimationFrame(this.loop.bind(this));
-    this.startTimer();
-}
-
+        // Ensure timer renders immediately
+        this.render();
+        cancelAnimationFrame(this.aniId);
+        this.aniId = requestAnimationFrame(this.loop.bind(this));
+        this.startTimer();
+    }
 
     startTimer() {
         clearInterval(this.timer);  // Clear existing interval if present
@@ -63,13 +62,18 @@ export default class Main {
 
     handleTouch(event) {
         const { clientX, clientY } = event.touches[0];
+        const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
+        const startX = (canvas.width - boardSize) / 2;
+        const startY = canvas.height * 0.15;
+        const cellSize = boardSize / 9;
+    
         const redoArea = GameGlobal.sudokuBoard.redoButtonArea;
         const btnArea = GameGlobal.sudokuBoard.buttonArea;
         const markButtonArea = GameGlobal.sudokuBoard.markButtonArea; 
         const pauseArea = GameGlobal.sudokuBoard.pauseButtonArea;
-        const resumeArea = GameGlobal.sudokuBoard.resumeButtonArea;  
-
-        // If paused, only allow touch on the resume button
+        const resumeArea = GameGlobal.sudokuBoard.resumeButtonArea;
+    
+        // 1. Handle touch events when paused – Only allow resume button interaction
         if (GameGlobal.databus.isPaused) {
             if (
                 resumeArea &&
@@ -83,10 +87,10 @@ export default class Main {
             } else {
                 console.log("Touch blocked while paused.");
             }
-            return;  // Prevent touches on the board while paused
+            return;  // Block further interactions when paused
         }
-
-        // Handle pause button click
+    
+        // 2. Handle pause button click
         if (
             pauseArea &&
             clientX >= pauseArea.x &&
@@ -99,54 +103,51 @@ export default class Main {
             return;
         }
     
-        // Handle undo button
-        if (redoArea && 
-            clientX >= redoArea.x && 
-            clientX <= redoArea.x + redoArea.width && 
-            clientY >= redoArea.y && 
-            clientY <= redoArea.y + redoArea.height) {
+        // 3. Handle undo button
+        if (
+            redoArea &&
+            clientX >= redoArea.x &&
+            clientX <= redoArea.x + redoArea.width &&
+            clientY >= redoArea.y &&
+            clientY <= redoArea.y + redoArea.height
+        ) {
             GameGlobal.sudokuBoard.undoLastMove();
             return;
         }
     
-        // Handle marking mode button
-        if (markButtonArea && 
-            clientX >= markButtonArea.x && 
-            clientX <= markButtonArea.x + markButtonArea.width && 
-            clientY >= markButtonArea.y && 
-            clientY <= markButtonArea.y + markButtonArea.height) {
+        // 4. Handle marking mode button
+        if (
+            markButtonArea &&
+            clientX >= markButtonArea.x &&
+            clientX <= markButtonArea.x + markButtonArea.width &&
+            clientY >= markButtonArea.y &&
+            clientY <= markButtonArea.y + markButtonArea.height
+        ) {
             GameGlobal.sudokuBoard.toggleMarkingMode();
             console.log("Marking mode toggled");
             return;
         }
     
-        // Handle number selection (mark or place)
-        if (btnArea && 
+        // 5. Handle number button taps
+        if (
+            btnArea &&
             clientY >= btnArea.y &&
             clientY <= btnArea.y + btnArea.buttonSize &&
             clientX >= btnArea.x &&
-            clientX <= btnArea.x + 9 * btnArea.buttonSize) {
-            const selectedNumber = Math.floor((clientX - btnArea.x) / btnArea.buttonSize) + 1;
-            GameGlobal.databus.selectedNumber = selectedNumber;
-            return;
-        }
-
-        // Resume button logic (when overlay is present)
-        if (
-            GameGlobal.databus.isPaused &&
-            resumeArea &&
-            clientX >= resumeArea.x &&
-            clientX <= resumeArea.x + resumeArea.width &&
-            clientY >= resumeArea.y &&
-            clientY <= resumeArea.y + resumeArea.height
+            clientX <= btnArea.x + 9 * btnArea.buttonSize
         ) {
-            GameGlobal.databus.togglePause();
-            console.log("Game Resumed");
+            const selectedNumber = Math.floor((clientX - btnArea.x) / btnArea.buttonSize) + 1;
+            GameGlobal.sudokuBoard.placeSelectedNumber(selectedNumber);
             return;
         }
     
-        // Place number or mark on Sudoku grid
-        GameGlobal.sudokuBoard.placeSelectedNumber(clientX, clientY);
+        // 6. Handle cell selection by tapping the board
+        const row = Math.floor((clientY - startY) / cellSize);  // Row (y-axis)
+        const col = Math.floor((clientX - startX) / cellSize);  // Column (x-axis)
+        
+        if (col >= 0 && col < 9 && row >= 0 && row < 9) {
+            GameGlobal.databus.selectCell(col, row);
+        }
     }
     
     // Toggle marking mode with a button press

@@ -11,6 +11,7 @@ export default class DataBus {
     sudokuGrid = []; // 当前数独棋盘数据
     solution = []; // 数独解法
     selectedCell = null; // 当前选中的单元格
+    highlightedNumber = null;
 
     constructor() {
         if (!instance) {
@@ -33,6 +34,7 @@ export default class DataBus {
         this.startTime = Date.now();
         this.elapsedTime = 0;
         this.isPaused = false;
+        this.highlightedNumber = null;
     }
 
     // Pause or resume the game
@@ -109,9 +111,14 @@ export default class DataBus {
    * @param {number} x 行号
    * @param {number} y 列号
    */
-  selectCell(x, y) {
-    this.selectedCell = { x, y };
-  }
+    selectCell(x, y) {
+        this.selectedCell = { x, y };
+        const currentValue = this.sudokuGrid[y][x];
+        
+        // Highlight the number if the cell has a value
+        this.highlightedNumber = currentValue !== 0 ? currentValue : null;
+        console.log(`Selected Cell: [${x}, ${y}], Highlighting: ${this.highlightedNumber}`);
+    }
 
   /**
    * 检查棋盘是否已完成

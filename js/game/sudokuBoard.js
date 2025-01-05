@@ -86,28 +86,28 @@ export default class SudokuBoard {
      * 检查数独是否只有一个解
      */
     hasUniqueSolution(board) {
-      let solutions = 0;
+        let solutions = 0;
   
-      const solve = (row, col) => {
-        if (row === this.size) {
-          solutions++;
-          return solutions === 1;
-        }
-        if (col === this.size) return solve(row + 1, 0);
-        if (board[row][col] !== 0) return solve(row, col + 1);
-  
-        for (let num = 1; num <= this.size; num++) {
-          if (this.isValid(board, row, col, num)) {
-            board[row][col] = num;
-            if (solve(row, col + 1)) return true;
-            board[row][col] = 0;
-          }
-        }
-        return false;
-      };
-  
-      solve(0, 0);
-      return solutions === 1;
+        const solve = (row, col) => {
+            if (row === this.size) {
+            solutions++;
+            return solutions === 1;
+            }
+            if (col === this.size) return solve(row + 1, 0);
+            if (board[row][col] !== 0) return solve(row, col + 1);
+    
+            for (let num = 1; num <= this.size; num++) {
+            if (this.isValid(board, row, col, num)) {
+                board[row][col] = num;
+                if (solve(row, col + 1)) return true;
+                board[row][col] = 0;
+            }
+            }
+            return false;
+        };
+    
+        solve(0, 0);
+        return solutions === 1;
     }
 
     // Toggle marking mode
@@ -178,27 +178,40 @@ export default class SudokuBoard {
         }
         return true;
     }
+
+    highlightSameNumber() {
+        const selectedCell = GameGlobal.databus.selectedCell;
+        if (!selectedCell) return;
     
-    placeSelectedNumber(x, y) {
-        const boardSize = Math.min(canvas.width * 0.9, canvas.height * 0.7);
-        const startX = (canvas.width - boardSize) / 2;
-        const startY = canvas.height * 0.15;
-        const cellSize = boardSize / this.size;
-        
-        if (x >= startX && x <= startX + boardSize && y >= startY && y <= startY + boardSize) {
-            const col = Math.floor((x - startX) / cellSize);
-            const row = Math.floor((y - startY) / cellSize);
-        
-            const selectedNumber = GameGlobal.databus.selectedNumber;
-            if (selectedNumber) {
-                this.placeNumber(row, col, selectedNumber);  // Always place the number
-                console.log(`Placed ${selectedNumber} at row: ${row}, col: ${col}`);
-            } else {
-                console.log("No number selected!");
-            }
+        const { x, y } = selectedCell;
+        const currentNumber = this.grid[y][x];
+    
+        // Highlight the current number if present
+        if (currentNumber !== 0) {
+            GameGlobal.databus.setHighlightedNumber(currentNumber);
         } else {
-            console.log("Touched outside the board.");
+            GameGlobal.databus.setHighlightedNumber(null);  // Reset if empty cell
         }
     }
-  }
+    
+    placeSelectedNumber(selectedNumber) {
+        const selectedCell = GameGlobal.databus.selectedCell;
+        const highlightedNumber = GameGlobal.databus.highlightedNumber;
+    
+        if (selectedCell) {
+            const { x, y } = selectedCell;  // x = col, y = row
+    
+            if (this.markingMode) {
+                this.placeMark(y, x, selectedNumber);  // y = row, x = col
+            } 
+            else {
+                this.placeNumber(y, x, selectedNumber);  // y = row, x = col
+            }
+    
+            console.log(`Placed ${selectedNumber} at row: ${y}, col: ${x}`);
+        } else {
+            console.log("No cell selected! Tap a cell first.");
+        }
+    }
+}
   
