@@ -1,4 +1,4 @@
-import { placeNumber as handlePlaceNumber, placeMark as handlePlaceMark, undoLastMove as handleUndoLastMove } from './moveHandler';
+import { placeNumber as handlePlaceNumber, placeMark as handlePlaceMark, undoLastMove as handleUndoLastMove, eraseSelectedCell as handleErase} from './moveHandler';
 import DataBus from '../databus';  // Import DataBus instance
 const databus = new DataBus();  // Singleton instance of DataBus
 
@@ -95,9 +95,6 @@ export default class SudokuBoard {
         return true;
     }
   
-    /**
-     * 检查数独是否只有一个解
-     */
     hasUniqueSolution(board) {
         let solutions = 0;
         const solve = (row, col) => {
@@ -143,6 +140,10 @@ export default class SudokuBoard {
     
     placeMark(x, y, value) {
         handlePlaceMark(this, x, y, value);  // Call imported placeMark
+    }
+
+    eraseSelectedCell() {
+        handleErase(this);  // Call the imported erase function
     }
     
     isComplete() {

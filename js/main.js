@@ -1,7 +1,7 @@
 import { 
     renderBoard, 
     renderNumberButtons, 
-    renderUndoAndMarkingButtons,
+    renderControlButtons,
     renderTimer,
     renderPauseButton,
     renderPauseOverlay 
@@ -67,88 +67,90 @@ export default class Main {
         const startY = canvas.height * 0.15;
         const cellSize = boardSize / 9;
     
-        const redoArea = GameGlobal.sudokuBoard.redoButtonArea;
-        const btnArea = GameGlobal.sudokuBoard.buttonArea;
-        const markButtonArea = GameGlobal.sudokuBoard.markButtonArea; 
-        const pauseArea = GameGlobal.sudokuBoard.pauseButtonArea;
-        const resumeArea = GameGlobal.sudokuBoard.resumeButtonArea;
+        // Button Areas
+        const {
+            redoButtonArea,
+            markButtonArea,
+            eraseButtonArea,
+            hintButtonArea,
+            pauseButtonArea,
+            resumeButtonArea,
+            buttonArea
+        } = GameGlobal.sudokuBoard;
     
-        // 1. Handle touch events when paused – Only allow resume button interaction
+        // Helper function to check if touch is inside a button
+        const isInside = (area) => {
+            return area &&
+                clientX >= area.x &&
+                clientX <= area.x + area.width &&
+                clientY >= area.y &&
+                clientY <= area.y + area.height;
+        };
+    
+        // 1. Handle Pause/Resume Interaction
         if (GameGlobal.databus.isPaused) {
-            if (
-                resumeArea &&
-                clientX >= resumeArea.x &&
-                clientX <= resumeArea.x + resumeArea.width &&
-                clientY >= resumeArea.y &&
-                clientY <= resumeArea.y + resumeArea.height
-            ) {
+            if (isInside(resumeButtonArea)) {
                 GameGlobal.databus.togglePause();
                 console.log("Game Resumed");
             } else {
                 console.log("Touch blocked while paused.");
             }
-            return;  // Block further interactions when paused
+            return;
         }
     
-        // 2. Handle pause button click
-        if (
-            pauseArea &&
-            clientX >= pauseArea.x &&
-            clientX <= pauseArea.x + pauseArea.width &&
-            clientY >= pauseArea.y &&
-            clientY <= pauseArea.y + pauseArea.height
-        ) {
+        if (isInside(pauseButtonArea)) {
             GameGlobal.databus.togglePause();
             console.log(GameGlobal.databus.isPaused ? 'Paused' : 'Resumed');
             return;
         }
     
-        // 3. Handle undo button
-        if (
-            redoArea &&
-            clientX >= redoArea.x &&
-            clientX <= redoArea.x + redoArea.width &&
-            clientY >= redoArea.y &&
-            clientY <= redoArea.y + redoArea.height
-        ) {
+        // 2. Handle Control Buttons (Undo, Mark, Erase, Hint)
+        if (isInside(redoButtonArea)) {
             GameGlobal.sudokuBoard.undoLastMove();
+            console.log("Undo pressed");
             return;
         }
     
-        // 4. Handle marking mode button
-        if (
-            markButtonArea &&
-            clientX >= markButtonArea.x &&
-            clientX <= markButtonArea.x + markButtonArea.width &&
-            clientY >= markButtonArea.y &&
-            clientY <= markButtonArea.y + markButtonArea.height
-        ) {
+        if (isInside(markButtonArea)) {
             GameGlobal.sudokuBoard.toggleMarkingMode();
             console.log("Marking mode toggled");
             return;
         }
     
-        // 5. Handle number button taps
-        if (
-            btnArea &&
-            clientY >= btnArea.y &&
-            clientY <= btnArea.y + btnArea.buttonSize &&
-            clientX >= btnArea.x &&
-            clientX <= btnArea.x + 9 * btnArea.buttonSize
-        ) {
-            const selectedNumber = Math.floor((clientX - btnArea.x) / btnArea.buttonSize) + 1;
+        if (isInside(eraseButtonArea)) {
+            GameGlobal.sudokuBoard.eraseSelectedCell();
+            console.log("Erase pressed");
+            return;
+        }
+    
+        if (isInside(hintButtonArea)) {
+            GameGlobal.sudokuBoard.provideHint();
+            console.log("Hint pressed");
+            return;
+        }
+    
+        // 3. Handle Number Selection (Bottom Row of Numbers)
+        if (buttonArea &&
+            clientY >= buttonArea.y &&
+            clientY <= buttonArea.y + buttonArea.buttonSize &&
+            clientX >= buttonArea.x &&
+            clientX <= buttonArea.x + 9 * buttonArea.buttonSize) {
+    
+            const selectedNumber = Math.floor((clientX - buttonArea.x) / buttonArea.buttonSize) + 1;
             GameGlobal.sudokuBoard.placeSelectedNumber(selectedNumber);
             return;
         }
     
-        // 6. Handle cell selection by tapping the board
+        // 4. Handle Cell Selection by Tapping the Board
         const row = Math.floor((clientY - startY) / cellSize);  // Row (y-axis)
         const col = Math.floor((clientX - startX) / cellSize);  // Column (x-axis)
-        
+    
         if (col >= 0 && col < 9 && row >= 0 && row < 9) {
             GameGlobal.databus.selectCell(col, row);
+            console.log(`Selected Cell: [${col}, ${row}]`);
         }
     }
+    
     
     // Toggle marking mode with a button press
     toggleMarkingMode() {
@@ -177,7 +179,7 @@ export default class Main {
             // Render the Sudoku grid and numbers if not paused
             renderBoard(ctx, this.sudokuBoard, boardSize, startX, startY);
             renderNumberButtons(ctx, startX, startY + boardSize + 20, boardSize, GameGlobal.databus.selectedNumber);
-            renderUndoAndMarkingButtons(ctx, startX, startY + boardSize + 100, boardSize);
+            renderControlButtons(ctx, startX, startY + boardSize + 100, boardSize);
         }
 
         this.gameInfo.render(ctx);
