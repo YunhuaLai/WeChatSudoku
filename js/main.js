@@ -4,7 +4,8 @@ import {
     renderControlButtons,
     renderTimer,
     renderPauseButton,
-    renderPauseOverlay 
+    renderPauseOverlay,
+    renderWelcomeScreen
 } from './game/renderSudoku';
 import SudokuBoard from './game/sudokuBoard';
 import GameInfo from './runtime/gameinfo';
@@ -67,8 +68,8 @@ export default class Main {
         const startY = canvas.height * 0.15;
         const cellSize = boardSize / 9;
     
-        // Button Areas
         const {
+            startButtonArea,
             redoButtonArea,
             markButtonArea,
             eraseButtonArea,
@@ -78,78 +79,83 @@ export default class Main {
             buttonArea
         } = GameGlobal.sudokuBoard;
     
-        // Helper function to check if touch is inside a button
-        const isInside = (area) => {
-            return area &&
-                clientX >= area.x &&
-                clientX <= area.x + area.width &&
-                clientY >= area.y &&
-                clientY <= area.y + area.height;
-        };
+        // Helper to check button area
+        const isInside = (area) =>
+            area &&
+            clientX >= area.x &&
+            clientX <= area.x + area.width &&
+            clientY >= area.y &&
+            clientY <= area.y + area.height;
     
-        // 1. Handle Pause/Resume Interaction
+        // Welcome Screen Handling
+        if (GameGlobal.databus.isWelcomeScreen) {
+            if (startButtonArea && isInside(startButtonArea)) {
+                GameGlobal.databus.isWelcomeScreen = false;
+                console.log("Game Started!");
+                return;
+            }
+            return;  // Block touch if still on welcome screen
+        }
+    
+        // Pause/Resume
         if (GameGlobal.databus.isPaused) {
-            if (isInside(resumeButtonArea)) {
+            if (resumeButtonArea && isInside(resumeButtonArea)) {
                 GameGlobal.databus.togglePause();
                 console.log("Game Resumed");
             } else {
-                console.log("Touch blocked while paused.");
+                console.log("Paused - Interaction Blocked");
             }
             return;
         }
     
-        if (isInside(pauseButtonArea)) {
+        if (pauseButtonArea && isInside(pauseButtonArea)) {
             GameGlobal.databus.togglePause();
             console.log(GameGlobal.databus.isPaused ? 'Paused' : 'Resumed');
             return;
         }
     
-        // 2. Handle Control Buttons (Undo, Mark, Erase, Hint)
-        if (isInside(redoButtonArea)) {
+        // Control Buttons
+        if (redoButtonArea && isInside(redoButtonArea)) {
             GameGlobal.sudokuBoard.undoLastMove();
-            console.log("Undo pressed");
+            console.log("Undo Pressed");
             return;
         }
     
-        if (isInside(markButtonArea)) {
+        if (markButtonArea && isInside(markButtonArea)) {
             GameGlobal.sudokuBoard.toggleMarkingMode();
-            console.log("Marking mode toggled");
+            console.log("Marking Mode Toggled");
             return;
         }
     
-        if (isInside(eraseButtonArea)) {
+        if (eraseButtonArea && isInside(eraseButtonArea)) {
             GameGlobal.sudokuBoard.eraseSelectedCell();
-            console.log("Erase pressed");
+            console.log("Erase Pressed");
             return;
         }
     
-        if (isInside(hintButtonArea)) {
+        if (hintButtonArea && isInside(hintButtonArea)) {
             GameGlobal.sudokuBoard.provideHint();
-            console.log("Hint pressed");
+            console.log("Hint Pressed");
             return;
         }
     
-        // 3. Handle Number Selection (Bottom Row of Numbers)
-        if (buttonArea &&
-            clientY >= buttonArea.y &&
-            clientY <= buttonArea.y + buttonArea.buttonSize &&
-            clientX >= buttonArea.x &&
-            clientX <= buttonArea.x + 9 * buttonArea.buttonSize) {
-    
+        // Number Selection
+        if (buttonArea && isInside(buttonArea)) {
             const selectedNumber = Math.floor((clientX - buttonArea.x) / buttonArea.buttonSize) + 1;
             GameGlobal.sudokuBoard.placeSelectedNumber(selectedNumber);
             return;
         }
     
-        // 4. Handle Cell Selection by Tapping the Board
-        const row = Math.floor((clientY - startY) / cellSize);  // Row (y-axis)
-        const col = Math.floor((clientX - startX) / cellSize);  // Column (x-axis)
+        // Board Cell Selection
+        const row = Math.floor((clientY - startY) / cellSize);
+        const col = Math.floor((clientX - startX) / cellSize);
     
         if (col >= 0 && col < 9 && row >= 0 && row < 9) {
             GameGlobal.databus.selectCell(col, row);
             console.log(`Selected Cell: [${col}, ${row}]`);
         }
     }
+    
     
     
     // Toggle marking mode with a button press
@@ -168,21 +174,25 @@ export default class Main {
         const startX = (canvas.width - boardSize) / 2;
         const startY = canvas.height * 0.15;
 
-        // Render Timer and Pause Button at Top
-        renderTimer(ctx, startX, startY - 50, boardSize);
-        renderPauseButton(ctx, startX, startY - 50, boardSize);
-
-        // If paused, only render the overlay (hide grid and numbers)
-        if (GameGlobal.databus.isPaused) {
-            renderPauseOverlay(ctx, boardSize, startX, startY);
+        if (GameGlobal.databus.isWelcomeScreen) {
+            renderWelcomeScreen(ctx, canvas.width, canvas.height);
         } else {
-            // Render the Sudoku grid and numbers if not paused
-            renderBoard(ctx, this.sudokuBoard, boardSize, startX, startY);
-            renderNumberButtons(ctx, startX, startY + boardSize + 20, boardSize, GameGlobal.databus.selectedNumber);
-            renderControlButtons(ctx, startX, startY + boardSize + 100, boardSize);
-        }
+            // Render Timer and Pause Button at Top
+            renderTimer(ctx, startX, startY - 50, boardSize);
+            renderPauseButton(ctx, startX, startY - 50, boardSize);
 
-        this.gameInfo.render(ctx);
+            // If paused, only render the overlay (hide grid and numbers)
+            if (GameGlobal.databus.isPaused) {
+                renderPauseOverlay(ctx, boardSize, startX, startY);
+            } else {
+                // Render the Sudoku grid and numbers if not paused
+                renderBoard(ctx, this.sudokuBoard, boardSize, startX, startY);
+                renderNumberButtons(ctx, startX, startY + boardSize + 20, boardSize, GameGlobal.databus.selectedNumber);
+                renderControlButtons(ctx, startX, startY + boardSize + 100, boardSize);
+            }
+
+            this.gameInfo.render(ctx);
+        }
     }
     
     loop() {

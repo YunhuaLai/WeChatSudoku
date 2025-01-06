@@ -362,3 +362,24 @@ function highlightSelection(ctx, sudokuBoard, boardSize, startX, startY) {
         }
     }
 }
+
+export function renderWelcomeScreen(ctx, canvasWidth, canvasHeight) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';  // Semi-transparent background
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Sudoku', canvasWidth / 2, canvasHeight / 3);
+
+    ctx.font = '24px Arial';
+    ctx.fillText('Tap to Start', canvasWidth / 2, canvasHeight / 2);
+
+    // Track button area for interaction
+    GameGlobal.sudokuBoard.startButtonArea = {
+        x: canvasWidth / 2 - 100,
+        y: canvasHeight / 2 - 30,
+        width: 200,
+        height: 60
+    };
+}

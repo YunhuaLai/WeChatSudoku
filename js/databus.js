@@ -12,6 +12,7 @@ export default class DataBus {
     solution = [];  // Store the full solution for validation
     selectedCell = null;
     highlightedNumber = null;
+    isWelcomeScreen = true;  
 
     constructor() {
         if (!instance) {
@@ -32,8 +33,12 @@ export default class DataBus {
         this.elapsedTime = 0;
         this.isPaused = false;
         this.highlightedNumber = null;
+        this.isWelcomeScreen = true;  
     }
 
+    start(){
+        this.isWelcomeScreen = false; 
+    }
     // Pause or resume the game
     togglePause() {
         this.isPaused = !this.isPaused;
