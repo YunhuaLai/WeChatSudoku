@@ -142,7 +142,9 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
     GameGlobal.sudokuBoard.buttonArea = {
         x,
         y,
-        buttonSize
+        width,         
+        height: buttonSize,
+        buttonSize: buttonSize
     };
 }
 

@@ -78,7 +78,7 @@ export default class Main {
             resumeButtonArea,
             buttonArea
         } = GameGlobal.sudokuBoard;
-    
+        
         // Helper to check button area
         const isInside = (area) =>
             area &&
@@ -140,7 +140,7 @@ export default class Main {
         }
     
         // Number Selection
-        if (buttonArea && isInside(buttonArea)) {
+        if (buttonArea && isInside(buttonArea)) { 
             const selectedNumber = Math.floor((clientX - buttonArea.x) / buttonArea.buttonSize) + 1;
             GameGlobal.sudokuBoard.placeSelectedNumber(selectedNumber);
             return;
@@ -155,8 +155,6 @@ export default class Main {
             console.log(`Selected Cell: [${col}, ${row}]`);
         }
     }
-    
-    
     
     // Toggle marking mode with a button press
     toggleMarkingMode() {

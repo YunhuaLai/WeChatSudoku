@@ -1,4 +1,5 @@
 import { placeNumber as handlePlaceNumber, placeMark as handlePlaceMark, undoLastMove as handleUndoLastMove, eraseSelectedCell as handleErase} from './moveHandler';
+import { generateSudoku,isValid } from './sudokuGenerator';
 import DataBus from '../databus';  // Import DataBus instance
 const databus = new DataBus();  // Singleton instance of DataBus
 
@@ -16,107 +17,10 @@ export default class SudokuBoard {
     }
 
     init() {
-        this.grid = this.generateSudoku();
+        this.grid = generateSudoku();
         this.originalGrid = JSON.parse(JSON.stringify(this.grid));
         this.mistakes = {};
-        if (!this.grid || this.grid.length !== this.size) {
-            console.error("Grid failed to initialize.");
-            this.grid = Array.from({ length: this.size }, () => Array(this.size).fill(0));
-        }
         databus.setSudokuGrid(this.grid, this.solution);
-    }
-    
-    generateSudoku() {
-        let board = Array.from({ length: this.size }, () => Array(this.size).fill(0));
-        this.fillBoard(board);
-        this.removeNumbers(board);
-    
-        // Check if the board was properly filled
-        if (!board || board.length !== this.size || !board[0]) {
-            console.error("Failed to generate Sudoku board.");
-            return Array.from({ length: this.size }, () => Array(this.size).fill(0));
-        }
-        this.solution = JSON.parse(JSON.stringify(board)); 
-        return board;
-    }
-    
-    fillBoard(board) {
-        const fill = (row, col) => {
-            if (row === this.size) return true;
-            if (col === this.size) return fill(row + 1, 0);
-            if (board[row][col] !== 0) return fill(row, col + 1);
-
-            for (let num = 1; num <= this.size; num++) {
-                if (this.isValid(board, row, col, num)) {
-                    board[row][col] = num;
-                    if (fill(row, col + 1)) return true;
-                    board[row][col] = 0;  // Backtrack
-                }
-            }
-            return false;
-        };
-        fill(0, 0);
-    }
-
-    removeNumbers(board) {
-        let attempts = 30;
-        while (attempts > 0) {
-            const row = Math.floor(Math.random() * this.size);
-            const col = Math.floor(Math.random() * this.size);
-            if (board[row][col] !== 0) {
-                const backup = board[row][col];
-                board[row][col] = 0;
-                const copy = JSON.parse(JSON.stringify(board));
-                if (!this.hasUniqueSolution(copy)) {
-                    board[row][col] = backup;
-                }
-                attempts--;
-            }
-        }
-    }
-
-    isValid(board, row, col, num) {
-        for (let i = 0; i < this.size; i++) {
-            if ((board[row][i] === num && i !== col) || 
-                (board[i][col] === num && i !== row)) {
-                return false;
-            }
-        }
-        const startRow = Math.floor(row / 3) * 3;
-        const startCol = Math.floor(col / 3) * 3;
-        for (let r = 0; r < 3; r++) {
-            for (let c = 0; c < 3; c++) {
-                if (board[startRow + r][startCol + c] === num && 
-                    (startRow + r !== row || startCol + c !== col)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-  
-    hasUniqueSolution(board) {
-        let solutions = 0;
-        const solve = (row, col) => {
-            if (row === this.size) {
-            solutions++;
-            return solutions === 1;
-            }
-            if (col === this.size) return solve(row + 1, 0);
-            if (board[row][col] !== 0) return solve(row, col + 1);
-    
-            for (let num = 1; num <= this.size; num++) {
-            if (this.isValid(board, row, col, num)) {
-                board[row][col] = num;
-                if (solve(row, col + 1)) return true;
-                board[row][col] = 0;
-            }
-            }
-            return false;
-        };
-    
-        solve(0, 0);
-        return solutions === 1;
     }
 
     // Toggle marking mode
@@ -127,7 +31,11 @@ export default class SudokuBoard {
   
     canPlaceNumber(x, y, value) {
       if (this.originalGrid[x][y] !== 0) return false;  // 初始格子不可修改
-      return this.isValid(this.grid, x, y, value);
+      return isValid(this.grid, x, y, value);
+    }
+
+    isValid(board, row, col, num) {
+        return isValid(board, row, col, num, this.size);
     }
     
     placeNumber(x, y, value) {
@@ -173,7 +81,6 @@ export default class SudokuBoard {
     placeSelectedNumber(selectedNumber) {
         const selectedCell = GameGlobal.databus.selectedCell;
         const highlightedNumber = GameGlobal.databus.highlightedNumber;
-    
         if (selectedCell) {
             const { x, y } = selectedCell;  // x = col, y = row
     
