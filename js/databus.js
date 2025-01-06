@@ -13,6 +13,8 @@ export default class DataBus {
     selectedCell = null;
     highlightedNumber = null;
     isWelcomeScreen = true;  
+    isDifficultyScreen = false;
+    difficulty = 'easy';  // Default to easy
 
     constructor() {
         if (!instance) {
@@ -38,6 +40,7 @@ export default class DataBus {
 
     start(){
         this.isWelcomeScreen = false; 
+        this.isDifficultyScreen = true; 
     }
     // Pause or resume the game
     togglePause() {
@@ -65,11 +68,6 @@ export default class DataBus {
         this.isPaused = true;
     }
 
-  /**
-   * 设置新的数独棋盘
-   * @param {Array} grid 9x9数独棋盘
-   * @param {Array} solution 数独的完整解法
-   */
     // Set Sudoku Grid and Solution
     setSudokuGrid(grid, solution) {
         this.sudokuGrid = JSON.parse(JSON.stringify(grid));
@@ -77,19 +75,20 @@ export default class DataBus {
         console.log("Sudoku Grid and Solution Set in DataBus");
     }
 
-  /**
-   * 更新棋盘单元格的值
-   * @param {number} x 行号
-   * @param {number} y 列号
-   * @param {number} value 填入的值
-   */
+    setDifficulty(level) {
+        this.difficulty = level;
+        this.isDifficultyScreen = false;  // Exit difficulty screen
+        this.isGameRunning = true;        // Start game
+        GameGlobal.sudokuBoard.init();    // Re-generate Sudoku with difficulty
+    }
+
     updateCell(x, y, value) {
-        this.sudokuGrid[x][y] = value;
+        this.sudokuGrid[y][x] = value;
         this.selectedCell = { y, x };  // Track the currently updated cell
 
         console.log(`Updated DataBus at [${x}, ${y}] with ${value}`);
 
-        const currentValue = this.sudokuGrid[x][y];
+        const currentValue = this.sudokuGrid[y][x];
         this.highlightedNumber = currentValue !== 0 ? currentValue : null;
 
         if (this.checkCompletion()) {
@@ -101,11 +100,6 @@ export default class DataBus {
         return Array.from({ length: 9 }, () => Array(9).fill(0));
     }
 
-  /**
-   * 选择单元格，用于高亮或输入
-   * @param {number} x 行号
-   * @param {number} y 列号
-   */
     selectCell(x, y) {
         this.selectedCell = { x, y };
         const currentValue = this.sudokuGrid[y][x];

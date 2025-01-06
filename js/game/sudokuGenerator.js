@@ -1,4 +1,4 @@
-export function generateSudoku(size = 9, difficulty = 'medium') {
+export function generateSudoku(difficulty = 'medium', size = 9 ) {
     let board = Array.from({ length: size }, () => Array(size).fill(0));
     fillBoard(board, size);  // Fill the board fully
     const solution = JSON.parse(JSON.stringify(board));  // Store the solution
@@ -65,7 +65,7 @@ function getAttempts(difficulty) {
         case 'medium':
             return 40;
         case 'hard':
-            return 50;  // More cells removed
+            return 60;  // More cells removed
         case 'expert':
             return 58;  // Extreme difficulty
         default:

@@ -17,7 +17,7 @@ export default class SudokuBoard {
     }
 
     init() {
-        const { board, solution } = generateSudoku();
+        const { board, solution } = generateSudoku(databus.difficulty);
         this.grid = board;
         this.solution = solution;
         this.originalGrid = JSON.parse(JSON.stringify(this.grid));

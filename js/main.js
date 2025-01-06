@@ -1,12 +1,20 @@
 import { 
     renderBoard, 
-    renderNumberButtons, 
-    renderControlButtons,
+} from './ui/renderBoard';
+import {
     renderTimer,
     renderPauseButton,
     renderPauseOverlay,
-    renderWelcomeScreen
-} from './game/renderSudoku';
+} from './ui/renderTopButtons';
+import {
+    renderWelcomeScreen,
+    renderDifficultyScreen
+} from './ui/renderWelcome';
+import {
+    renderNumberButtons,
+    renderControlButtons
+} from './ui/renderBottomButtons';
+
 import SudokuBoard from './game/sudokuBoard';
 import GameInfo from './runtime/gameinfo';
 import DataBus from './databus';
@@ -90,11 +98,29 @@ export default class Main {
         // Welcome Screen Handling
         if (GameGlobal.databus.isWelcomeScreen) {
             if (startButtonArea && isInside(startButtonArea)) {
-                GameGlobal.databus.isWelcomeScreen = false;
+                GameGlobal.databus.start()
                 console.log("Game Started!");
                 return;
             }
             return;  // Block touch if still on welcome screen
+        }
+
+        if (GameGlobal.databus.isDifficultyScreen) {
+            const buttons = ['easy', 'medium', 'hard'];
+            console.log("Selected difficulted")
+            for (const level of buttons) {
+                const btnArea = GameGlobal.sudokuBoard[`difficultyButton_${level}`];
+                if (
+                    clientX >= btnArea.x &&
+                    clientX <= btnArea.x + btnArea.width &&
+                    clientY >= btnArea.y &&
+                    clientY <= btnArea.y + btnArea.height
+                ) {
+                    GameGlobal.databus.setDifficulty(level);
+                    console.log(`Difficulty selected: ${level}`);
+                    return;
+                }
+            }
         }
     
         // Pause/Resume
@@ -174,6 +200,8 @@ export default class Main {
 
         if (GameGlobal.databus.isWelcomeScreen) {
             renderWelcomeScreen(ctx, canvas.width, canvas.height);
+        } else if (GameGlobal.databus.isDifficultyScreen) {
+            renderDifficultyScreen(ctx, canvas);
         } else {
             // Render Timer and Pause Button at Top
             renderTimer(ctx, startX, startY - 50, boardSize);
