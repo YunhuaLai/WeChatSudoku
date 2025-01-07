@@ -15,6 +15,7 @@ export default class DataBus {
     isWelcomeScreen = true;  
     isDifficultyScreen = false;
     difficulty = 'easy';  // Default to easy
+    showDifficultyBar = false;
 
     constructor() {
         if (!instance) {
@@ -36,12 +37,21 @@ export default class DataBus {
         this.isPaused = false;
         this.highlightedNumber = null;
         this.isWelcomeScreen = true;  
+        this.showDifficultyBar = false;
     }
 
     start(){
         this.isWelcomeScreen = false; 
         this.isDifficultyScreen = true; 
     }
+
+    startGame(difficulty = 'easy') {
+        console.log(`Starting new ${difficulty} game`);
+        this.reset();
+        this.difficulty = difficulty;
+        this.sudokuBoard.init();
+    }
+
     // Pause or resume the game
     togglePause() {
         this.isPaused = !this.isPaused;
@@ -80,6 +90,8 @@ export default class DataBus {
         this.isDifficultyScreen = false;  // Exit difficulty screen
         this.isGameRunning = true;        // Start game
         GameGlobal.sudokuBoard.init();    // Re-generate Sudoku with difficulty
+        this.startTime = Date.now();
+
     }
 
     updateCell(x, y, value) {

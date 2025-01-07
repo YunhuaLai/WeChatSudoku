@@ -2,6 +2,8 @@ import {
     renderBoard, 
 } from './ui/renderBoard';
 import {
+    renderNewGameButton,
+    renderDifficultyBar,
     renderTopStatusBar,
     renderPauseButton,
     renderPauseOverlay
@@ -84,6 +86,7 @@ export default class Main {
             hintButtonArea,
             pauseButtonArea,
             resumeButtonArea,
+            newGameButtonArea,
             buttonArea
         } = GameGlobal.sudokuBoard;
         
@@ -98,7 +101,8 @@ export default class Main {
         // Welcome Screen Handling
         if (GameGlobal.databus.isWelcomeScreen) {
             if (startButtonArea && isInside(startButtonArea)) {
-                GameGlobal.databus.start()
+                GameGlobal.databus.isWelcomeScreen = false; 
+                GameGlobal.databus.isDifficultyScreen = true;
                 console.log("Game Started!");
                 return;
             }
@@ -122,7 +126,13 @@ export default class Main {
                 }
             }
         }
-    
+
+        if (isInside(newGameButtonArea)) {
+            GameGlobal.databus.isDifficultyScreen = true;
+            console.log('New Game button clicked');
+            return;
+        }
+        
         // Pause/Resume
         if (GameGlobal.databus.isPaused) {
             if (resumeButtonArea && isInside(resumeButtonArea)) {
@@ -201,11 +211,14 @@ export default class Main {
         if (GameGlobal.databus.isWelcomeScreen) {
             renderWelcomeScreen(ctx, canvas.width, canvas.height);
         } else if (GameGlobal.databus.isDifficultyScreen) {
-            renderDifficultyScreen(ctx, canvas);
+            renderDifficultyScreen(ctx, canvas); 
+        } else if (   GameGlobal.databus.showDifficultyBar) {
+            renderDifficultyBar(ctx, canvas);
         } else {
             // Render Timer and Pause Button at Top
             renderTopStatusBar(ctx, startX, startY, boardSize);
             renderPauseButton(ctx, startX, startY, boardSize);
+            renderNewGameButton(ctx, startX, startY - 60, boardSize);
 
             // If paused, only render the overlay (hide grid and numbers)
             if (GameGlobal.databus.isPaused) {
