@@ -126,8 +126,6 @@ export function renderHighlight(ctx, lastPlacement, gridSize, boardSize, startX,
     }
 }
 
-
-
 function getMarkPosition(mark, cellSize) {
     const positions = {
         1: { x: 0, y: 0 },

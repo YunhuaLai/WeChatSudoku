@@ -2,9 +2,9 @@ import {
     renderBoard, 
 } from './ui/renderBoard';
 import {
-    renderTimer,
+    renderTopStatusBar,
     renderPauseButton,
-    renderPauseOverlay,
+    renderPauseOverlay
 } from './ui/renderTopButtons';
 import {
     renderWelcomeScreen,
@@ -204,8 +204,8 @@ export default class Main {
             renderDifficultyScreen(ctx, canvas);
         } else {
             // Render Timer and Pause Button at Top
-            renderTimer(ctx, startX, startY - 50, boardSize);
-            renderPauseButton(ctx, startX, startY - 50, boardSize);
+            renderTopStatusBar(ctx, startX, startY, boardSize);
+            renderPauseButton(ctx, startX, startY, boardSize);
 
             // If paused, only render the overlay (hide grid and numbers)
             if (GameGlobal.databus.isPaused) {
@@ -216,8 +216,6 @@ export default class Main {
                 renderNumberButtons(ctx, startX, startY + boardSize + 20, boardSize, GameGlobal.databus.selectedNumber);
                 renderControlButtons(ctx, startX, startY + boardSize + 100, boardSize);
             }
-
-            this.gameInfo.render(ctx);
         }
     }
     

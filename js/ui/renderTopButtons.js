@@ -1,42 +1,34 @@
-export function renderTimer(ctx, x, y, width) {
-    const time = GameGlobal.databus.getElapsedTime();
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-
-    ctx.font = `${Math.max(width / 18, 24)}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#aaf0d1';
-
-    ctx.fillText(`${minutes}:${seconds.toString().padStart(2, '0')}`, x + width / 2, y + 30);
-}
-
 export function renderPauseButton(ctx, x, y, width) {
-    const buttonSize = width / 6;
+    const buttonSize = width / 12;  // Smaller button size
     const barWidth = buttonSize / 6;
-    const barHeight = buttonSize / 2;
+    const barHeight = buttonSize / 1.5;
 
-    ctx.fillStyle = GameGlobal.databus.isPaused ? '#aaf0d1' : '#f0f0f0';
-    ctx.fillRect(x + width - buttonSize - 20, y, buttonSize, barHeight);
-    ctx.strokeStyle = '#000';
-    ctx.strokeRect(x + width - buttonSize - 20, y, buttonSize, barHeight);
+    const offsetY = barHeight / 2;  // Center the button by adjusting vertically
 
-    ctx.fillStyle = '#000';
+    ctx.strokeStyle = '#fff';  // White for the hollow columns
+    ctx.lineWidth = 3;
 
-    if (GameGlobal.databus.isPaused) {
-        ctx.beginPath();
-        ctx.moveTo(x + width - buttonSize / 2 - 20, y + barHeight / 4);
-        ctx.lineTo(x + width - buttonSize / 2 + 10, y + barHeight / 2);
-        ctx.lineTo(x + width - buttonSize / 2 - 20, y + (barHeight * 3) / 4);
-        ctx.closePath();
-        ctx.fill();
-    } else {
-        ctx.fillRect(x + width - buttonSize / 2 - barWidth - 20, y + barHeight / 4, barWidth, barHeight / 2);
-        ctx.fillRect(x + width - buttonSize / 2 + barWidth - 20, y + barHeight / 4, barWidth, barHeight / 2);
-    }
+    // Calculate the Y position to vertically center the button relative to y
+    const centerY = y - 20 - barHeight / 2;
 
+    // Draw two hollow vertical bars (||) for pause
+    ctx.strokeRect(
+        x + width - buttonSize - 20,
+        centerY,
+        barWidth,
+        barHeight
+    );
+    ctx.strokeRect(
+        x + width - buttonSize + barWidth - 15,
+        centerY,
+        barWidth,
+        barHeight
+    );
+
+    // Store pause button area for touch detection
     GameGlobal.sudokuBoard.pauseButtonArea = {
         x: x + width - buttonSize - 20,
-        y,
+        y: centerY,
         width: buttonSize,
         height: barHeight
     };
@@ -64,4 +56,31 @@ export function renderPauseOverlay(ctx, boardSize, startX, startY) {
         width: buttonWidth,
         height: buttonHeight
     };
+}
+
+export function renderTopStatusBar(ctx, x, y, width) {
+    const time = GameGlobal.databus.getElapsedTime();
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+
+    const errors = GameGlobal.databus.errors;
+    const difficulty = GameGlobal.databus.difficulty || 'Easy';
+
+    const fontSize = Math.max(width / 20, 24);
+
+    ctx.font = `${fontSize}px Arial`;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#bbb';  // Light grey for default text
+
+    // Difficulty
+    ctx.fillText(`${difficulty}`, x + 20, y-20);
+
+    // Error Counter
+    ctx.fillStyle = '#ff4d4d';  // Red for mistakes
+    ctx.fillText(`Errors: ${errors}`, x + width / 3, y-20 );
+
+    // Timer
+    ctx.fillStyle = '#aaf0d1';  // Light green for the timer
+    ctx.textAlign = 'right';
+    ctx.fillText(`${minutes}:${seconds.toString().padStart(2, '0')}`, x + width - 60, y-20);
 }

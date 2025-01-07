@@ -17,12 +17,4 @@ export default class GameInfo extends Emitter {
   /**
    * 渲染错误次数
    */
-  render(ctx) {
-    this.setFont(ctx);
-    ctx.fillText(
-      `错误: ${GameGlobal.databus.errors}`, 
-      SCREEN_WIDTH / 2, 
-      50  // Position near the top center
-    );
-  }
 }
