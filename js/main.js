@@ -216,8 +216,8 @@ export default class Main {
             renderDifficultyBar(ctx, canvas);
         } else {
             // Render Timer and Pause Button at Top
-            renderTopStatusBar(ctx, startX, startY, boardSize);
-            renderPauseButton(ctx, startX, startY, boardSize);
+            renderTopStatusBar(ctx, canvas.width, startY, boardSize);
+            renderPauseButton(ctx, canvas.width, startY, boardSize);
             renderNewGameButton(ctx, startX, startY - 60, boardSize);
 
             // If paused, only render the overlay (hide grid and numbers)

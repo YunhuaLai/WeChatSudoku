@@ -1,35 +1,28 @@
-export function renderPauseButton(ctx, x, y, width) {
-    const buttonSize = width / 12;  // Smaller button size
+export function renderPauseButton(ctx, canvasWidth, y, boardSize) {
+    const buttonSize = boardSize / 12;  // Maintain consistent size relative to board
     const barWidth = buttonSize / 6;
     const barHeight = buttonSize / 1.5;
 
-    const offsetY = barHeight / 2;  // Center the button by adjusting vertically
+    const offsetY = barHeight / 2;  // Center the button vertically
 
-    ctx.strokeStyle = '#fff';  // White for the hollow columns
+    ctx.strokeStyle = '#fff';  // White for hollow bars
     ctx.lineWidth = 3;
 
-    // Calculate the Y position to vertically center the button relative to y
+    // Calculate Y to vertically center the button relative to y
     const centerY = y - 20 - barHeight / 2;
 
+    // Align the button’s right edge with the board’s right side
+    const buttonX = canvasWidth - (canvasWidth - boardSize) / 2 - barWidth * 2 - 10;
+
     // Draw two hollow vertical bars (||) for pause
-    ctx.strokeRect(
-        x + width - buttonSize - 20,
-        centerY,
-        barWidth,
-        barHeight
-    );
-    ctx.strokeRect(
-        x + width - buttonSize + barWidth - 15,
-        centerY,
-        barWidth,
-        barHeight
-    );
+    ctx.strokeRect(buttonX, centerY, barWidth, barHeight);
+    ctx.strokeRect(buttonX + barWidth + 8, centerY, barWidth, barHeight);
 
     // Store pause button area for touch detection
     GameGlobal.sudokuBoard.pauseButtonArea = {
-        x: x + width - buttonSize - 20,
+        x: buttonX,
         y: centerY,
-        width: buttonSize,
+        width: barWidth * 2 + 8,
         height: barHeight
     };
 }
@@ -58,7 +51,7 @@ export function renderPauseOverlay(ctx, boardSize, startX, startY) {
     };
 }
 
-export function renderTopStatusBar(ctx, x, y, width) {
+export function renderTopStatusBar(ctx, canvasWidth, y, boardSize) {
     const time = GameGlobal.databus.getElapsedTime();
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
@@ -66,23 +59,30 @@ export function renderTopStatusBar(ctx, x, y, width) {
     const errors = GameGlobal.databus.errors;
     const difficulty = GameGlobal.databus.difficulty || 'Easy';
 
-    const fontSize = Math.max(width / 20, 24);
+    const fontSize = Math.max(boardSize / 20, 24);  // Adjust font size to board size
 
     ctx.font = `${fontSize}px Arial`;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#bbb';  // Light grey for default text
 
-    // Difficulty
-    ctx.fillText(`${difficulty}`, x + 20, y-20);
+    // Calculate x position to align with the left of the board
+    const startX = (canvasWidth - boardSize) / 2;
 
-    // Error Counter
-    ctx.fillStyle = '#ff4d4d';  // Red for mistakes
-    ctx.fillText(`Errors: ${errors}`, x + width / 3, y-20 );
+    // Difficulty (left-aligned)
+    ctx.fillText(`${difficulty}`, startX + 20, y - 20);
 
-    // Timer
-    ctx.fillStyle = '#aaf0d1';  // Light green for the timer
+    // Error Counter (centered between difficulty and timer)
+    ctx.fillStyle = '#ff4d4d';
+    ctx.fillText(`Errors: ${errors}`, startX + boardSize / 3, y - 20);
+
+    // Timer (right-aligned, leaving space for the pause button)
+    ctx.fillStyle = '#aaf0d1';
     ctx.textAlign = 'right';
-    ctx.fillText(`${minutes}:${seconds.toString().padStart(2, '0')}`, x + width - 60, y-20);
+    ctx.fillText(
+        `${minutes}:${seconds.toString().padStart(2, '0')}`,
+        startX + boardSize - 40,  // Adjusted for spacing
+        y - 20
+    );
 }
 
 export function renderNewGameButton(ctx, x, y, width) {
