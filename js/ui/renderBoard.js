@@ -93,7 +93,7 @@ export function renderNumbers(ctx, grid, originalGrid, marks, mistakes, gridSize
                     if (highlightedNumber && mark === highlightedNumber) {
                         ctx.fillStyle = '#ffcc80';  // Light orange for mark highlight
                     } else {
-                        ctx.fillStyle = '#888';
+                        ctx.fillStyle = '#007bff';
                     }
 
                     ctx.fillText(
