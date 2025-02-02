@@ -82,18 +82,16 @@ export default class SudokuBoard {
     
     placeSelectedNumber(selectedNumber) {
         const selectedCell = GameGlobal.databus.selectedCell;
-        const highlightedNumber = GameGlobal.databus.highlightedNumber;
         if (selectedCell) {
-            const { x, y } = selectedCell;  // x = col, y = row
+            const { x: col, y: row } = selectedCell;  
     
             if (this.markingMode) {
-                this.placeMark(y, x, selectedNumber);  // y = row, x = col
-            } 
-            else {
-                this.placeNumber(y, x, selectedNumber);  // y = row, x = col
+                this.placeMark(col, row, selectedNumber);
+            } else {
+                this.placeNumber(col, row, selectedNumber);
             }
     
-            console.log(`Placed ${selectedNumber} at row: ${y}, col: ${x}`);
+            console.log(`Placed ${selectedNumber} at row: ${row}, col: ${col}`);
         } else {
             console.log("No cell selected! Tap a cell first.");
         }

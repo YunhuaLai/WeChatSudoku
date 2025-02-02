@@ -1,4 +1,4 @@
-export function placeNumber(sudokuBoard, row, col, value) {
+export function placeNumber(sudokuBoard, col, row, value) {
     console.log(`Attempting to place ${value} at [row: ${row}, col: ${col}]`);
 
     // Prevent overwriting initial values
@@ -35,7 +35,7 @@ export function placeNumber(sudokuBoard, row, col, value) {
     }
 }
 
-export function placeMark(sudokuBoard, row, col, value) {
+export function placeMark(sudokuBoard, col, row, value) {
     const key = `${row},${col}`;
 
     // Prevent marking in cells that already have a number
@@ -70,6 +70,7 @@ export function placeMark(sudokuBoard, row, col, value) {
 }
 
 export function undoLastMove(sudokuBoard) {
+    console.log("UNDO IT")
     if (sudokuBoard.moveHistory.length > 0) {
         const lastMove = sudokuBoard.moveHistory.pop();
         const { x, y } = lastMove;
@@ -88,7 +89,7 @@ export function undoLastMove(sudokuBoard) {
             console.log(`Undo Erase: Restored [${x}, ${y}] to ${lastMove.previousValue}`);
         } else if (lastMove.type === 'number') {
             // Undo a number placement
-            sudokuBoard.grid[y][x] = lastMove.previousValue;
+            sudokuBoard.grid[x][y] = lastMove.previousValue;
             
             if (lastMove.previousMarks) {
                 sudokuBoard.marks[key] = new Set(lastMove.previousMarks);

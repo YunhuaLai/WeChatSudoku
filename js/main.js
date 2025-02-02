@@ -50,12 +50,8 @@ export default class Main {
     }
 
     startTimer() {
-        clearInterval(this.timer);  // Clear existing interval if present
-        this.timer = setInterval(() => {
-            if (!GameGlobal.databus.isPaused) {
-                this.render();  // Force re-render every second
-            }
-        }, 1000); 
+        cancelAnimationFrame(this.aniId);
+        this.aniId = requestAnimationFrame(this.loop.bind(this));
     }
     
     playerInput(x, y, value) {

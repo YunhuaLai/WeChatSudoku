@@ -74,9 +74,10 @@ export default class DataBus {
 
     gameOver() {
         this.isGameOver = true;
-        this.elapsedTime += Date.now() - this.startTime;  // Stop timer on game over
+        this.elapsedTime += Date.now() - this.startTime;
         this.isPaused = true;
-    }
+        clearInterval(GameGlobal.main.timer);  // Stop timer after game over
+    }    
 
     // Set Sudoku Grid and Solution
     setSudokuGrid(grid, solution) {
@@ -122,6 +123,6 @@ export default class DataBus {
     }
 
     checkCompletion() {
-        return this.sudokuGrid.every((row) => row.every((cell) => cell !== 0));
+        return JSON.stringify(this.sudokuGrid) === JSON.stringify(this.solution);
     }
 }
