@@ -1,3 +1,4 @@
+# Sudoku WeChat Mini-Game
 ## 源码目录介绍
 
 ```
@@ -28,13 +29,12 @@
 ├── project.config.json                        // 项目配置
 └── project.private.config.json                // 项目个人配置
 ```
-Sudoku WeChat Mini-Game
 
-Introduction
+## Introduction
 
 This is a Sudoku game designed as a WeChat Mini-Program. The game provides an interactive and user-friendly experience, allowing players to solve Sudoku puzzles with different difficulty levels. The application supports essential features such as number input, hints, marking mode, pause/resume functionality, and error tracking.
 
-Features
+## Features
 
 Welcome Screen: Tap to start the game.
 
@@ -52,35 +52,32 @@ Pause & Resume: Players can pause and resume the game at any time.
 
 Hints: Provides hints for players who need help.
 
-Project Structure
-
-The project is structured into several JavaScript modules:
-
-game.js: Entry point that initializes the game (Main class).
-
-databus.js: Global state manager that maintains game status, score, errors, and selected elements.
-
-render.js: Manages the canvas rendering settings.
-
-main.js: Core game logic, handling events, rendering, and player inputs.
-
-renderWelcome.js: Renders the welcome screen UI.
-
-renderTopButtons.js: Renders the top bar, including the pause button, difficulty level, and timer.
-
-renderBoard.js: Handles rendering of the Sudoku board, including number placements and highlights.
-
-renderBottomButtons.js: Renders the number selection and control buttons.
-
-gameinfo.js: Manages error display and game information.
-
-moveHandler.js: Handles number placements, marking, undo, and erase operations.
-
-sudokuGenerator.js: Generates a new Sudoku puzzle with a unique solution based on the selected difficulty.
-
-sudokuBoard.js: Manages the Sudoku board logic, including validation and highlighting.
-
-How to Play
+## Project Structure
+```
+├── audio                                      // Audio resources
+├── images                                     // Image resources
+├── js
+│   ├── game
+│   │   ├── sudokuBoard.js                     // Sudoku game logic
+│   │   ├── moveHandler.js                     // Handles game moves
+│   │   ├── sudokuGenerator.js                 // Sudoku puzzle generator
+│   ├── runtime
+│   │   ├── gameinfo.js                        // Displays score and game results
+│   ├── ui
+│   │   ├── renderWelcome.js                   // Renders the welcome screen
+│   │   ├── renderTopButtons.js                // Renders the top buttons
+│   │   ├── renderBoard.js                     // Renders the Sudoku board
+│   │   ├── renderBottomButtons.js             // Renders the bottom buttons
+│   ├── databus.js                             // Manages game state
+│   ├── main.js                                // Main game entry point
+│   ├── render.js                              // Base rendering functions
+├── .eslintrc.js                               // Code style rules
+├── game.js                                    // Game logic entry point
+├── game.json                                  // Game runtime configuration
+├── project.config.json                        // Project configuration
+├── project.private.config.json                // Personal project configuration
+```
+## How to Play
 
 Start the Game: Tap on the screen to proceed from the welcome screen.
 
@@ -98,9 +95,9 @@ Hints: Tap the hint button for assistance.
 
 Win the Game: Complete the board correctly without errors!
 
-Setup & Development
+## Setup & Development
 
-Prerequisites
+### Prerequisites
 
 WeChat Developer Tools
 
@@ -108,7 +105,7 @@ JavaScript (ES6+)
 
 HTML5 Canvas API
 
-Steps to Run Locally
+### Steps to Run Locally
 
 Clone the repository.
 
@@ -118,7 +115,7 @@ Run the mini-game in the WeChat simulator.
 
 Modify the source code as needed for enhancements.
 
-Future Improvements
+## Future Improvements
 
 Multiplayer Mode: Implement a competitive mode for multiple players.
 
@@ -128,7 +125,7 @@ Achievements & Rewards: Reward players for completing puzzles.
 
 Enhanced UI/UX: Improve graphics and animations for a better experience.
 
-Contributors
+## Contributors
 
 Developer: Yunhua Lai
 
