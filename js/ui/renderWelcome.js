@@ -27,6 +27,7 @@ export function renderDifficultyScreen(ctx, canvas) {
 
     const difficulties = ['Easy', 'Medium', 'Hard'];
 
+    // Render difficulty buttons
     difficulties.forEach((difficulty, index) => {
         const btnY = y + index * 80;
 
@@ -42,6 +43,7 @@ export function renderDifficultyScreen(ctx, canvas) {
             btnY + height / 2 + 8
         );
 
+        // Store button area for click detection
         GameGlobal.sudokuBoard[`difficultyButton_${difficulty.toLowerCase()}`] = {
             x,
             y: btnY,
@@ -49,4 +51,29 @@ export function renderDifficultyScreen(ctx, canvas) {
             height
         };
     });
+
+    // 🔹 Add a Resume Button if a game is in progress
+    if (!GameGlobal.databus.isWelcomeScreen && !GameGlobal.databus.isGameOver) {
+        const resumeBtnY = y + difficulties.length * 80 + 40; // Position below the last difficulty button
+
+        ctx.fillStyle = '#aaf0d1';  // Light green for Resume button
+        ctx.fillRect(x, resumeBtnY, width, height);
+        ctx.strokeRect(x, resumeBtnY, width, height);
+
+        ctx.fillStyle = '#000';
+        ctx.font = '28px Arial';
+        ctx.fillText(
+            'Resume',
+            x + width / 2,
+            resumeBtnY + height / 2 + 8
+        );
+
+        // Store Resume button area for interaction
+        GameGlobal.sudokuBoard.resumeButtonArea = {
+            x,
+            y: resumeBtnY,
+            width,
+            height
+        };
+    }
 }

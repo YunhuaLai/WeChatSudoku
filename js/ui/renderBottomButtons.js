@@ -3,12 +3,12 @@
 
   This file contains:
     • renderNumberButtons – Renders the nine number buttons along the bottom.
-    • renderControlButtons – Renders four control buttons (Redo, Mark, Erase, Hint) with icons.
+    • renderControlButtons – Renders four control buttons (undo, Mark, Erase, Hint) with icons.
     • drawModernButton – Helper function to draw a button with rounded corners, gradient, and drop shadow.
     • drawRoundedRect, createVerticalGradient, lightenColor – Helper functions.
-    • Icon functions: drawRedoIcon, drawPencilIcon, drawEraserIcon, drawLightBulbIcon.
+    • Icon functions: drawundoIcon, drawPencilIcon, drawEraserIcon, drawLightBulbIcon.
 */
-
+import { Icons, drawIcon } from '../icons/icons.js'
 /* ---------------------- Number Buttons ---------------------- */
 /**
  * Renders number buttons (1-9) with a gradient background and rounded buttons.
@@ -67,7 +67,7 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
   
   /* --------------------- Control Buttons ---------------------- */
   /**
-   * Renders control buttons (Redo, Mark, Erase, Hint) with icons.
+   * Renders control buttons (undo, Mark, Erase, Hint) with icons.
    * @param {CanvasRenderingContext2D} ctx - The canvas context.
    * @param {number} x - Left coordinate.
    * @param {number} y - Top coordinate.
@@ -96,52 +96,59 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
     let btnX = x;
     let btnY = y + barPadding;
     
-    // 1. Redo Button – Anticlockwise arrow covering 270°
-    drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Redo", drawRedoIcon, {
+    // 1. undo Button
+    drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Undo", "undo", {
       iconColor: 'red', bgColor: "#666"
     });
-    GameGlobal.sudokuBoard.redoButtonArea = { x: btnX, y: btnY, width: buttonWidth, height: buttonHeight };
+    GameGlobal.sudokuBoard.undoButtonArea = {
+      x: btnX, y: btnY, width: buttonWidth, height: buttonHeight
+    };
   
-    // 2. Mark Button – Pencil icon (may indicate marking mode)
+    // 2. Mark Button (Pencil)
     btnX = x + buttonWidth + spacing;
     const markingMode = GameGlobal.sudokuBoard.markingMode;
     const markBgColor = markingMode ? "#4caf50" : "#666";
-    drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Mark", drawPencilIcon, {
+    drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Mark", "pencil", {
       iconColor: '#fff', bgColor: markBgColor
     });
-    GameGlobal.sudokuBoard.markButtonArea = { x: btnX, y: btnY, width: buttonWidth, height: buttonHeight };
+    GameGlobal.sudokuBoard.markButtonArea = {
+      x: btnX, y: btnY, width: buttonWidth, height: buttonHeight
+    };
   
-    // 3. Erase Button – Eraser icon.
+    // 3. Erase Button
     btnX = x + (buttonWidth + spacing) * 2;
-    drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Erase", drawEraserIcon, {
+    drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Erase", "erase", {
       iconColor: '#fff', bgColor: "#666"
     });
-    GameGlobal.sudokuBoard.eraseButtonArea = { x: btnX, y: btnY, width: buttonWidth, height: buttonHeight };
+    GameGlobal.sudokuBoard.eraseButtonArea = {
+      x: btnX, y: btnY, width: buttonWidth, height: buttonHeight
+    };
   
-    // 4. Hint Button – Light bulb icon.
+    // 4. Hint Button
     btnX = x + (buttonWidth + spacing) * 3;
-    drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Hint", drawLightBulbIcon, {
+    drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Hint", "hint", {
       iconColor: '#fff', bgColor: "#666"
     });
-    GameGlobal.sudokuBoard.hintButtonArea = { x: btnX, y: btnY, width: buttonWidth, height: buttonHeight };
+    GameGlobal.sudokuBoard.hintButtonArea = {
+      x: btnX, y: btnY, width: buttonWidth, height: buttonHeight
+    };
   }
   
-  /* ---------------------- Helper Functions ---------------------- */
-  /**
-   * Draws a modern–styled button with rounded corners, gradient, and drop shadow.
-   * @param {CanvasRenderingContext2D} ctx 
-   * @param {number} x - Top–left x coordinate.
-   * @param {number} y - Top–left y coordinate.
-   * @param {number} width - Button width.
-   * @param {number} height - Button height.
-   * @param {string} label - Button label.
-   * @param {Function} iconFunction - Function to draw the icon.
-   * @param {object} options - Options (iconColor, bgColor).
-   */
-  function drawModernButton(ctx, x, y, width, height, label, iconFunction, options = {}) {
-    const radius = 8;
-    const grad = createVerticalGradient(ctx, x, y, width, height, lightenColor(options.bgColor, 20), options.bgColor);
   
+  /** Draws a modern–styled button with a PNG icon and a label. */
+  function drawModernButton(ctx, x, y, width, height, label, iconKey, options = {}) {
+    const radius = 8;
+    const grad = createVerticalGradient(
+      ctx,
+      x,
+      y,
+      width,
+      height,
+      lightenColor(options.bgColor, 20),
+      options.bgColor
+    );
+  
+    // Draw the button background with a drop shadow
     ctx.save();
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
     ctx.shadowBlur = 4;
@@ -150,20 +157,19 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
     drawRoundedRect(ctx, x, y, width, height, radius, grad, null);
     ctx.restore();
   
-    // Draw the icon (positioned slightly above the center)
+    // Draw the PNG icon near the top center
     const iconX = x + width / 2;
     const iconY = y + height / 2 - 8;
-    iconFunction(ctx, iconX, iconY, options);
+    drawIcon(ctx, iconKey, iconX, iconY, 20, 20); 
+    // 20x20 is a suggested icon size; tweak as desired.
   
-    // Draw the label at the bottom of the button
+    // Draw the label near the bottom center
     ctx.fillStyle = '#fff';
     ctx.textBaseline = 'bottom';
     ctx.fillText(label, x + width / 2, y + height - 4);
   }
   
-  /**
-   * Draws a rounded rectangle.
-   */
+  /** Same as before: draws a rounded rectangle. */
   function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -187,9 +193,7 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
     }
   }
   
-  /**
-   * Creates a vertical gradient.
-   */
+  /** Same as before: creates a vertical gradient. */
   function createVerticalGradient(ctx, x, y, width, height, colorTop, colorBottom) {
     const grad = ctx.createLinearGradient(x, y, x, y + height);
     grad.addColorStop(0, colorTop);
@@ -197,9 +201,7 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
     return grad;
   }
   
-  /**
-   * Lightens a hex color by a given percent.
-   */
+  /** Same as before: lighten a hex color. */
   function lightenColor(color, percent) {
     let num = parseInt(color.slice(1), 16),
         amt = Math.round(2.55 * percent),
@@ -211,132 +213,3 @@ export function renderNumberButtons(ctx, x, y, width, selectedNumber) {
     B = B < 255 ? (B < 0 ? 0 : B) : 255;
     return "#" + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
   }
-  
-  /* ---------------------- Icon Functions ---------------------- */
-
-  function drawRedoIcon(ctx, x, y, options) {
-    ctx.save();
-    ctx.strokeStyle = options.iconColor || 'red';
-    ctx.fillStyle = options.iconColor || 'red';
-    ctx.lineWidth = 2;
-  
-    const radius = 10;
-    const startAngle = -Math.PI / 2;       // Top (–90°)
-    const arcSpan = 1.5 * Math.PI;           // 270° arc
-    const endAngle = startAngle - arcSpan;   // End angle (drawn anticlockwise)
-    
-    ctx.beginPath();
-    ctx.arc(x, y, radius, startAngle, endAngle, true);
-    ctx.stroke();
-  
-    // Compute the arrowhead at the start of the arc.
-    const tipX = x + radius * Math.cos(startAngle);
-    const tipY = y + radius * Math.sin(startAngle);
-    const tangentAngle = startAngle - Math.PI / 2;
-    const arrowLength = 5;
-    const arrowAngleOffset = 0.4;
-    const leftWingX = tipX + arrowLength * Math.cos(tangentAngle + arrowAngleOffset);
-    const leftWingY = tipY + arrowLength * Math.sin(tangentAngle + arrowAngleOffset);
-    const rightWingX = tipX + arrowLength * Math.cos(tangentAngle - arrowAngleOffset);
-    const rightWingY = tipY + arrowLength * Math.sin(tangentAngle - arrowAngleOffset);
-  
-    ctx.beginPath();
-    ctx.moveTo(tipX, tipY);
-    ctx.lineTo(leftWingX, leftWingY);
-    ctx.lineTo(rightWingX, rightWingY);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-  
-  function drawPencilIcon(ctx, x, y, options) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(-Math.PI / 4);
-    ctx.fillStyle = options.iconColor || '#fff';
-    ctx.strokeStyle = options.iconColor || '#fff';
-    ctx.lineWidth = 1.5;
-    
-    // Pencil body
-    ctx.beginPath();
-    ctx.rect(-10, -2, 14, 4);
-    ctx.fill();
-    ctx.stroke();
-    
-    // Pencil tip as a triangle
-    ctx.beginPath();
-    ctx.moveTo(4, -2);
-    ctx.lineTo(8, 0);
-    ctx.lineTo(4, 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-  }
-  
-  function drawEraserIcon(ctx, x, y, options) {
-    ctx.save();
-    ctx.translate(x, y);
-    
-    // Dimensions and slant offset
-    const eraserWidth = 20;
-    const eraserHeight = 12;
-    const slant = 4;
-    
-    // Create a gradient for a dual-tone fill.
-    const baseColor = options.bgColor || "#ccc";
-    const gradient = ctx.createLinearGradient(-eraserWidth / 2, -eraserHeight / 2, eraserWidth / 2, eraserHeight / 2);
-    gradient.addColorStop(0, baseColor);
-    gradient.addColorStop(1, lightenColor(baseColor, 20));
-    
-    ctx.fillStyle = gradient;
-    ctx.strokeStyle = options.iconColor || "#fff";
-    ctx.lineWidth = 1;
-    
-    // Draw the eraser shape as a trapezoid.
-    ctx.beginPath();
-    ctx.moveTo(-eraserWidth / 2, eraserHeight / 2);          // Bottom–left
-    ctx.lineTo(eraserWidth / 2, eraserHeight / 2);             // Bottom–right
-    ctx.lineTo(eraserWidth / 2 - slant, -eraserHeight / 2);    // Top–right (slanted)
-    ctx.lineTo(-eraserWidth / 2 + slant, -eraserHeight / 2);   // Top–left (slanted)
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    // Optionally, add a highlight line along the top edge.
-    ctx.beginPath();
-    ctx.moveTo(-eraserWidth / 2 + slant, -eraserHeight / 2);
-    ctx.lineTo(eraserWidth / 2 - slant, -eraserHeight / 2);
-    ctx.strokeStyle = lightenColor(options.iconColor || "#fff", 20);
-    ctx.stroke();
-    
-    ctx.restore();
-  }
-  
-  function drawLightBulbIcon(ctx, x, y, options) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = options.iconColor || '#fff';
-    ctx.strokeStyle = options.iconColor || '#fff';
-    ctx.lineWidth = 1.5;
-    
-    // Bulb
-    ctx.beginPath();
-    ctx.arc(0, -3, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    
-    // Base
-    ctx.beginPath();
-    ctx.rect(-3, 2, 6, 3);
-    ctx.fill();
-    ctx.stroke();
-    
-    // Filament
-    ctx.beginPath();
-    ctx.moveTo(-2, -1);
-    ctx.lineTo(2, -1);
-    ctx.stroke();
-    ctx.restore();
-  }
-  

@@ -2,10 +2,8 @@ import {
     renderBoard, 
 } from './ui/renderBoard';
 import {
-    renderNewGameButton,
     renderDifficultyBar,
-    renderTopStatusBar,
-    renderPauseButton,
+    renderHeaderUI,
     renderPauseOverlay
 } from './ui/renderTopButtons';
 import {
@@ -16,6 +14,8 @@ import {
     renderNumberButtons,
     renderControlButtons
 } from './ui/renderBottomButtons';
+import { preloadIcons } from './icons/icons.js';
+
 
 import SudokuBoard from './game/sudokuBoard';
 import GameInfo from './runtime/gameinfo';
@@ -32,10 +32,22 @@ export default class Main {
     gameInfo = new GameInfo();
 
     constructor() {
-        this.gameInfo.on('restart', this.start.bind(this));
-        wx.onTouchStart(this.handleTouch.bind(this));  // Bind touch event
-        this.start();
-    }
+        // Preload the SVG icons first
+        preloadIcons('js/icons/')
+          .then(() => {
+            // Once icons are loaded, we can safely start the game
+            this.gameInfo.on('restart', this.start.bind(this));
+    
+            // Bind touch events (WeChat Mini Game environment)
+            wx.onTouchStart(this.handleTouch.bind(this));
+    
+            // Finally, start the game
+            this.start();
+          })
+          .catch(err => {
+            console.error('Failed to preload icons:', err);
+          });
+      }
 
     start() {
         GameGlobal.databus.reset();
@@ -212,9 +224,7 @@ export default class Main {
             renderDifficultyBar(ctx, canvas);
         } else {
             // Render Timer and Pause Button at Top
-            renderTopStatusBar(ctx, canvas.width, startY, boardSize);
-            renderPauseButton(ctx, canvas.width, startY, boardSize);
-            renderNewGameButton(ctx, startX, startY - 60, boardSize);
+            renderHeaderUI(ctx, canvas, boardSize);
 
             // If paused, only render the overlay (hide grid and numbers)
             if (GameGlobal.databus.isPaused) {
