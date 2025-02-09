@@ -32,8 +32,7 @@ export default class Main {
     gameInfo = new GameInfo();
 
     constructor() {
-        // Preload the SVG icons first
-        preloadIcons('js/icons/')
+        preloadIcons('../images/icons/')
           .then(() => {
             // Once icons are loaded, we can safely start the game
             this.gameInfo.on('restart', this.start.bind(this));

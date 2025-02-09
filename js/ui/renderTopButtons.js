@@ -1,5 +1,5 @@
 import { UI_CONFIG } from './config.js';
-import { drawRoundedRect, drawCenteredText } from './utils.js';
+import { drawRoundedRect, drawCenteredText,createVerticalGradient } from './utils.js';
 import { LAYOUT } from './layoutConfig.js';
 
 /**
@@ -11,6 +11,7 @@ export function renderNewGameButton(ctx, x, y, boardSize) {
   const iconSize = buttonHeight * 0.6;
   const textPadding = 14;
   const textColor = UI_CONFIG.colors.defaultText;
+  const light = 'rgba(200, 200, 200, 0.3)'
 
   // Set font and alignments.
   ctx.font = `${iconSize}px ${UI_CONFIG.fonts.base}`;
@@ -19,7 +20,7 @@ export function renderNewGameButton(ctx, x, y, boardSize) {
   const buttonWidth = iconSize + textPadding + textWidth + 30;
 
   // Draw the rounded rectangle border.
-  drawRoundedRect(ctx, x, y, buttonWidth, buttonHeight, 10, textColor, UI_CONFIG.lineWidth);
+  drawRoundedRect(ctx, x, y, buttonWidth, buttonHeight, 10, light, UI_CONFIG.lineWidth);
 
   // Draw the "+" icon.
   const iconX = x + buttonHeight * 0.7;
@@ -119,37 +120,50 @@ export function renderPauseButton(ctx, canvasWidth, statusBarY, statusBarHeight,
 /**
  * Renders the pause overlay (for when the game is paused).
  */
+import { drawModernButton } from './utils';
+
 export function renderPauseOverlay(ctx, boardSize, startX, startY) {
   const overlayColor = UI_CONFIG.colors.overlay;
   const buttonWidth = boardSize / 3;
   const buttonHeight = boardSize / 10;
+  const buttonSpacing = buttonHeight * 0.4; // Space between buttons
 
   // Draw overlay background.
   ctx.fillStyle = overlayColor;
   ctx.fillRect(startX, startY, boardSize, boardSize);
 
-  // Center the resume button.
+  // Center the buttons.
   const btnX = startX + (boardSize - buttonWidth) / 2;
   const btnY = startY + (boardSize - buttonHeight) / 2;
 
-  ctx.fillStyle = UI_CONFIG.colors.resumeButton;
-  ctx.fillRect(btnX, btnY, buttonWidth, buttonHeight);
-  ctx.strokeStyle = UI_CONFIG.colors.defaultText;
-  ctx.lineWidth = UI_CONFIG.lineWidth;
-  ctx.strokeRect(btnX, btnY, buttonWidth, buttonHeight);
+  // Draw Resume button.
+  drawModernButton(ctx, btnX, btnY, buttonWidth, buttonHeight, "Resume", "resume", {
+    bgColor: UI_CONFIG.colors.resumeButton,
+  });
 
-  // Center the "Resume" text.
-  const fontSize = buttonHeight / 2;
-  drawCenteredText(ctx, "Resume", startX + boardSize / 2, startY + boardSize / 2, fontSize, '#000');
+  // Draw Save button below Resume.
+  const saveBtnY = btnY + buttonHeight + buttonSpacing;
+  drawModernButton(ctx, btnX, saveBtnY, buttonWidth, buttonHeight, "Save", "save", {
+    bgColor: UI_CONFIG.colors.saveButton || '#4CAF50', // Default green
+  });
 
+  // Store button areas for interaction.
   GameGlobal.sudokuBoard.resumeButtonArea = {
     x: btnX,
     y: btnY,
     width: buttonWidth,
     height: buttonHeight
   };
+
+  GameGlobal.sudokuBoard.saveButtonArea = {
+    x: btnX,
+    y: saveBtnY,
+    width: buttonWidth,
+    height: buttonHeight
+  };
 }
 
+  
 /**
  * Renders the difficulty selection bar at the bottom.
  */
@@ -215,4 +229,43 @@ export function renderHeaderUI(ctx, canvas, boardSize) {
   renderStatusBar(ctx, canvas, boardSize, statusBarY, statusBarHeight);
   // Render the pause button within the same status row.
   renderPauseButton(ctx, canvas.width, statusBarY, statusBarHeight, boardSize);
+}
+
+export function renderSaveButton(ctx, canvasWidth, y, boardSize) {
+    const buttonWidth = boardSize / 4;
+    const buttonHeight = boardSize / 12;
+    const x = canvasWidth - buttonWidth - 20;
+
+    ctx.fillStyle = '#007bff';
+    ctx.fillRect(x, y, buttonWidth, buttonHeight);
+    ctx.strokeRect(x, y, buttonWidth, buttonHeight);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText("Save", x + buttonWidth / 2, y + buttonHeight / 2 + 5);
+
+    GameGlobal.sudokuBoard.saveButtonArea = { x, y, width: buttonWidth, height: buttonHeight };
+}
+
+
+
+
+
+
+export function renderLoadButton(ctx, canvasWidth, y, boardSize) {
+    const buttonWidth = boardSize / 4;
+    const buttonHeight = boardSize / 12;
+    const x = canvasWidth - buttonWidth * 2 - 40;
+
+    ctx.fillStyle = '#28a745';
+    ctx.fillRect(x, y, buttonWidth, buttonHeight);
+    ctx.strokeRect(x, y, buttonWidth, buttonHeight);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText("Load", x + buttonWidth / 2, y + buttonHeight / 2 + 5);
+
+    GameGlobal.sudokuBoard.loadButtonArea = { x, y, width: buttonWidth, height: buttonHeight };
 }

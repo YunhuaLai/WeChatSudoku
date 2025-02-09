@@ -5,7 +5,9 @@ const iconPaths = {
     undo: 'images/icons/undo.png',
     pencil: 'images/icons/pencil.png',
     erase: 'images/icons/eraser.png',
-    hint: 'images/icons/games-hint.png'
+    hint: 'images/icons/games-hint.png',
+    save: 'images/icons/save.png',
+    resume: 'images/icons/resume.png'
   };
   
   export const Icons = {}; // Stores the loaded Image objects keyed by icon name.
