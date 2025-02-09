@@ -2,10 +2,10 @@
 // This file handles both preloading icons and drawing them.
 
 const iconPaths = {
-    undo: 'js/icons/undo.png',
-    pencil: 'js/icons/pencil.png',
-    erase: 'js/icons/eraser.png',
-    hint: 'js/icons/games-hint.png'
+    undo: 'images/icons/undo.png',
+    pencil: 'images/icons/pencil.png',
+    erase: 'images/icons/eraser.png',
+    hint: 'images/icons/games-hint.png'
   };
   
   export const Icons = {}; // Stores the loaded Image objects keyed by icon name.

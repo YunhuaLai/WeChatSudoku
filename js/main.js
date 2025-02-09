@@ -14,7 +14,7 @@ import {
     renderNumberButtons,
     renderControlButtons
 } from './ui/renderBottomButtons';
-import { preloadIcons } from './icons/icons.js';
+import { preloadIcons } from '../images/icons/icons.js';
 
 
 import SudokuBoard from './game/sudokuBoard';

@@ -8,7 +8,7 @@
     • drawRoundedRect, createVerticalGradient, lightenColor – Helper functions.
     • Icon functions: drawundoIcon, drawPencilIcon, drawEraserIcon, drawLightBulbIcon.
 */
-import { Icons, drawIcon } from '../icons/icons.js'
+import { Icons, drawIcon } from '../../images/icons/icons.js'
 /* ---------------------- Number Buttons ---------------------- */
 /**
  * Renders number buttons (1-9) with a gradient background and rounded buttons.
