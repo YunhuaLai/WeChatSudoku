@@ -70,7 +70,6 @@ export function placeMark(sudokuBoard, col, row, value) {
 }
 
 export function undoLastMove(sudokuBoard) {
-    console.log("UNDO IT")
     if (sudokuBoard.moveHistory.length > 0) {
         const lastMove = sudokuBoard.moveHistory.pop();
         const { x, y } = lastMove;
@@ -108,6 +107,7 @@ export function undoLastMove(sudokuBoard) {
 
             console.log(`Undo Mark at [${x}, ${y}].`);
         }
+        GameGlobal.databus.autoSaveGame(); 
     } else {
         console.log("No moves to undo.");
     }
@@ -132,7 +132,8 @@ export function eraseSelectedCell(sudokuBoard) {
         // Perform the erase
         sudokuBoard.grid[y][x] = 0;  // Clear the cell
         delete sudokuBoard.marks[key];  // Remove marks  
-
+        GameGlobal.databus.autoSaveGame(); // Trigger auto-save
+        
         console.log(`Erased cell at [${x}, ${y}]. Move saved to history.`);
     } else {
         console.log("No cell selected to erase.");

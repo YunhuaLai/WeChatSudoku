@@ -21,6 +21,7 @@ export default class DataBus {
         if (!instance) {
             instance = this;
         }
+        this.autoSaveTimer = null; // Timer for auto-saving
         return instance;
     }
 
@@ -58,6 +59,7 @@ export default class DataBus {
 
         if (this.isPaused) {
             this.elapsedTime += Date.now() - this.startTime;  // Track elapsed time
+            this.autoSaveGame()
         } else {
             this.startTime = Date.now();  // Restart from pause
         }
@@ -106,6 +108,8 @@ export default class DataBus {
 
         if (this.checkCompletion()) {
             this.gameOver();
+        } else {
+            this.autoSaveGame(); 
         }
     }
 
@@ -125,4 +129,72 @@ export default class DataBus {
     checkCompletion() {
         return JSON.stringify(this.sudokuGrid) === JSON.stringify(this.solution);
     }
+
+    saveGameState(name = 'LastGame') {
+        const fs = wx.getFileSystemManager();
+        const gameState = {
+            sudokuGrid: this.sudokuGrid,
+            solution: this.solution,
+            elapsedTime: this.getElapsedTime(),
+            difficulty: this.difficulty,
+            timestamp: new Date().toISOString()
+        };
+
+        const savePath = `${wx.env.USER_DATA_PATH}/${name}.json`;
+ 
+        fs.writeFile({
+            filePath: savePath,
+            data: JSON.stringify(gameState),
+            encoding: 'utf8',
+            success: () => {
+                console.log("Game state saved successfully!");
+                if (name != 'LastGame') {
+                    wx.showToast({ title: 'Game Saved!', icon: 'success' });
+                }
+            },
+            fail: (err) => {
+                console.error("Failed to save game state:", err);
+                wx.showToast({ title: 'Save Failed', icon: 'none' });
+            }
+        });
+    }
+
+    loadGameState(name = 'LastGame') {
+        return new Promise((resolve, reject) => {
+            const fs = wx.getFileSystemManager();
+            const savePath = `${wx.env.USER_DATA_PATH}/name.json`;
+    
+            fs.readFile({
+                filePath: savePath,
+                encoding: 'utf8',
+                success: (res) => {
+                    const gameState = JSON.parse(res.data);
+                    this.sudokuGrid = gameState.sudokuGrid;
+                    this.solution = gameState.solution;
+                    this.difficulty = gameState.difficulty;
+                    this.elapsedTime = gameState.elapsedTime;
+                    this.startTime = Date.now() - (this.elapsedTime * 1000);
+                    this.isPaused = false;
+    
+                    console.log("Auto-saved game loaded!");
+                    resolve(true);  // Notify that loading is successful
+                },
+                fail: (err) => {
+                    console.log("No auto-save found, starting a new game.");
+                    resolve(false);  // Notify that no saved game exists
+                }
+            });
+        });
+    }
+    
+    autoSaveGame() {
+        if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer); // Clear previous timer
+
+        // Set a new timer to save after 2 seconds of inactivity
+        this.autoSaveTimer = setTimeout(() => {
+            this.saveGameState();
+        }, 2000);
+    }
+
+
 }

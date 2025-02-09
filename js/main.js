@@ -50,16 +50,22 @@ export default class Main {
       }
 
     start() {
-        GameGlobal.databus.reset();
-        this.sudokuBoard.init();
-        GameGlobal.databus.selectedNumber = null;
+        GameGlobal.databus.loadGameState().then((loaded) => {
+            if (!loaded) {
+                // No previous game found, start fresh
+                GameGlobal.databus.reset();
+                this.sudokuBoard.init();
+                GameGlobal.databus.selectedNumber = null;
+            }
 
-        // Ensure timer renders immediately
-        this.render();
-        cancelAnimationFrame(this.aniId);
-        this.aniId = requestAnimationFrame(this.loop.bind(this));
-        this.startTimer();
+            // Ensure timer renders immediately
+            this.render();
+            cancelAnimationFrame(this.aniId);
+            this.aniId = requestAnimationFrame(this.loop.bind(this));
+            this.startTimer();
+        });
     }
+    
 
     startTimer() {
         cancelAnimationFrame(this.aniId);
